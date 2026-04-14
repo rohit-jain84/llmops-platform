@@ -1,0 +1,55 @@
+name: Eval-Gated Deployment
+
+on:
+  push:
+    paths:
+      - "prompts/**"
+      - "configs/prompt_*.yaml"
+
+jobs:
+  eval-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trigger eval run
+        run: |
+          EVAL_RUN_ID=$(curl -s -X POST \
+            "${{ secrets.API_URL }}/api/v1/cicd/trigger-eval" \
+            -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"prompt_id": "${{ github.event.head_commit.message }}", "dataset": "golden"}' \
+            | jq -r '.eval_run_id')
+          echo "EVAL_RUN_ID=$EVAL_RUN_ID" >> $GITHUB_ENV
+
+      - name: Wait for eval completion
+        run: |
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s \
+              "${{ secrets.API_URL }}/api/v1/cicd/eval-status/$EVAL_RUN_ID" \
+              -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" \
+              | jq -r '.status')
+            if [ "$STATUS" = "completed" ]; then break; fi
+            if [ "$STATUS" = "failed" ]; then exit 1; fi
+            sleep 10
+          done
+
+      - name: Check quality gate
+        run: |
+          PASSED=$(curl -s \
+            "${{ secrets.API_URL }}/api/v1/cicd/eval-status/$EVAL_RUN_ID" \
+            -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" \
+            | jq -r '.quality_gate_passed')
+          if [ "$PASSED" != "true" ]; then
+            echo "Quality gate FAILED — eval scores below threshold"
+            exit 1
+          fi
+
+      - name: Deploy canary
+        if: success()
+        run: |
+          curl -X POST \
+            "${{ secrets.API_URL }}/api/v1/deployments" \
+            -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"prompt_version_id": "${{ env.PROMPT_VERSION_ID }}", "canary_pct": 10}'

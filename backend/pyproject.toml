@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llmops-backend"
+version = "0.1.0"
+description = "LLMOps Platform Backend"
+requires-python = ">=3.12"
+dependencies = [
+    # Web
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    # Database
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29.0",
+    "alembic>=1.13.0",
+    # Cache & Queue
+    "redis>=5.0.0",
+    "celery[redis]>=5.4.0",
+    # LLM
+    "litellm>=1.40.0",
+    # Tracing
+    "langfuse>=2.40.0",
+    # Vectors
+    "qdrant-client>=1.9.0",
+    "sentence-transformers>=3.0.0",
+    # Auth
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.0.0",
+    # Stats
+    "scipy>=1.13.0",
+    "numpy>=1.26.0",
+    # OTel
+    "opentelemetry-api>=1.25.0",
+    "opentelemetry-sdk>=1.25.0",
+    "opentelemetry-exporter-otlp>=1.25.0",
+    "opentelemetry-instrumentation-fastapi>=0.46b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.46b0",
+    "opentelemetry-instrumentation-redis>=0.46b0",
+    "opentelemetry-instrumentation-httpx>=0.46b0",
+    # Templates
+    "jinja2>=3.1.4",
+    # Validation
+    "pydantic[email]>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    # HTTP
+    "httpx>=0.27.0",
+    # Utilities
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "factory-boy>=3.3.0",
+    "httpx>=0.27.0",
+    "ruff>=0.5.0",
+    "mypy>=1.10.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true

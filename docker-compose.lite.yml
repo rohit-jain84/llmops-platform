@@ -1,0 +1,61 @@
+# Lite configuration — 4 services only (Postgres, Redis, backend, frontend).
+# Use this for quick demos and evaluation without the full observability stack.
+#
+# Usage:
+#   docker compose -f docker-compose.lite.yml up -d
+#   docker compose -f docker-compose.lite.yml exec backend alembic upgrade head
+#   docker compose -f docker-compose.lite.yml exec backend python scripts/seed_data.py
+#
+# Requirements: ~2 GB RAM (vs ~8-16 GB for the full 12-service stack)
+
+services:
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # Disable optional services that aren't running in lite mode
+      LANGFUSE_SECRET_KEY: ""
+      LANGFUSE_PUBLIC_KEY: ""
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+      QDRANT_URL: ""
+    volumes: ["./backend/app:/app/app"]
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+    depends_on: [backend]
+    volumes: ["./frontend/src:/app/src"]
+
+  postgres:
+    image: postgres:16
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    environment:
+      POSTGRES_DB: llmops
+      POSTGRES_USER: llmops
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-llmops_dev}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U llmops"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

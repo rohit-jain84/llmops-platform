@@ -1,0 +1,45 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "quality-trends",
+    "title": "Quality Trends",
+    "tags": ["llmops", "quality"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "panels": [
+      {
+        "title": "Eval Scores Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "llmops_eval_score",
+            "legendFormat": "{{metric_name}} - {{app_id}}"
+          }
+        ]
+      },
+      {
+        "title": "Score by Prompt Version",
+        "type": "bargauge",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "targets": [
+          {
+            "expr": "llmops_eval_score",
+            "legendFormat": "{{metric_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Regression Alerts",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "targets": [
+          {
+            "expr": "changes(llmops_eval_score[1h]) > 0",
+            "legendFormat": "{{metric_name}}"
+          }
+        ]
+      }
+    ]
+  }
+}

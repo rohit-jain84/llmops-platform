@@ -1,0 +1,70 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "cost-analytics",
+    "title": "Cost Analytics",
+    "tags": ["llmops", "cost"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "panels": [
+      {
+        "title": "Daily Spend Trend",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "increase(llmops_cost_usd_total[1d])",
+            "legendFormat": "{{model}}"
+          }
+        ]
+      },
+      {
+        "title": "Cost by Model",
+        "type": "piechart",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "targets": [
+          {
+            "expr": "sum by (model) (llmops_cost_usd_total)",
+            "legendFormat": "{{model}}"
+          }
+        ]
+      },
+      {
+        "title": "Cost by Application",
+        "type": "bargauge",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "targets": [
+          {
+            "expr": "sum by (app_id) (llmops_cost_usd_total)",
+            "legendFormat": "{{app_id}}"
+          }
+        ]
+      },
+      {
+        "title": "Token Usage Breakdown",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+        "targets": [
+          {
+            "expr": "rate(llmops_tokens_input_total[5m])",
+            "legendFormat": "Input Tokens"
+          },
+          {
+            "expr": "rate(llmops_tokens_output_total[5m])",
+            "legendFormat": "Output Tokens"
+          }
+        ]
+      },
+      {
+        "title": "Budget Utilization",
+        "type": "gauge",
+        "gridPos": { "h": 4, "w": 12, "x": 0, "y": 24 },
+        "targets": [
+          {
+            "expr": "llmops_cost_usd_total"
+          }
+        ]
+      }
+    ]
+  }
+}
