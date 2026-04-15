@@ -23,6 +23,7 @@ import CostForecast from './pages/cost/cost-forecast'
 import ObservabilityDashboard from './pages/observability/observability-dashboard'
 import TracesList from './pages/observability/traces-list'
 import TraceViewer from './pages/observability/trace-viewer'
+import AlertConfig from './pages/observability/alert-config'
 import PipelineStatus from './pages/deployments/pipeline-status'
 import DeploymentHistory from './pages/deployments/deployment-history'
 import CanaryControls from './pages/deployments/canary-controls'
@@ -57,6 +58,7 @@ function App() {
           <Route path="/observability" element={<ObservabilityDashboard />} />
           <Route path="/observability/traces" element={<TracesList />} />
           <Route path="/observability/traces/:id" element={<TraceViewer />} />
+          <Route path="/observability/alerts" element={<AlertConfig />} />
           <Route path="/deployments" element={<PipelineStatus />} />
           <Route path="/deployments/:id" element={<DeploymentHistory />} />
           <Route path="/deployments/:id/canary" element={<CanaryControls />} />

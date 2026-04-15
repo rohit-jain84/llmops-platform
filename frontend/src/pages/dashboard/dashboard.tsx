@@ -24,12 +24,12 @@ export default function Dashboard() {
         />
         <MetricCard
           title="Total Cost"
-          value={`$${(costData?.total_cost_usd ?? 0).toFixed(2)}`}
+          value={`$${Number(costData?.total_cost_usd ?? 0).toFixed(2)}`}
           icon={<DollarSign className="h-4 w-4" />}
         />
         <MetricCard
           title="Cache Hit Rate"
-          value={`${((costData?.cache_hit_rate ?? 0) * 100).toFixed(1)}%`}
+          value={`${(Number(costData?.cache_hit_rate ?? 0) * 100).toFixed(1)}%`}
           icon={<Zap className="h-4 w-4" />}
         />
         <MetricCard

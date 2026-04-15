@@ -48,7 +48,7 @@ export default function CostDashboard() {
           <CardContent>
             <LineChart
               data={analytics?.daily_spend ?? []}
-              lines={[{ key: 'spend', label: 'Spend ($)', color: '#3b82f6' }]}
+              lines={[{ dataKey: 'spend', name: 'Spend ($)', color: '#3b82f6' }]}
               xAxisKey="date"
             />
           </CardContent>
@@ -58,7 +58,7 @@ export default function CostDashboard() {
           <CardContent>
             <BarChart
               data={analytics?.cost_by_model ?? []}
-              bars={[{ key: 'cost', label: 'Cost ($)', color: '#8b5cf6' }]}
+              bars={[{ dataKey: 'cost', name: 'Cost ($)', color: '#8b5cf6' }]}
               xAxisKey="model"
             />
           </CardContent>
@@ -70,7 +70,7 @@ export default function CostDashboard() {
         <CardContent>
           <BarChart
             data={analytics?.cost_by_app ?? []}
-            bars={[{ key: 'cost', label: 'Cost ($)', color: '#10b981' }]}
+            bars={[{ dataKey: 'cost', name: 'Cost ($)', color: '#10b981' }]}
             xAxisKey="app_name"
           />
         </CardContent>

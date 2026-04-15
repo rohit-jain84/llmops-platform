@@ -23,8 +23,8 @@ export default function ObservabilityDashboard() {
       />
 
       <div className="grid grid-cols-4 gap-4">
-        <MetricCard title="Avg Latency (P50)" value="245ms" trend={{ value: -5.2, direction: 'down' }} icon={<Clock className="h-4 w-4" />} />
-        <MetricCard title="Error Rate" value="0.12%" trend={{ value: 0.03, direction: 'up' }} icon={<AlertTriangle className="h-4 w-4" />} />
+        <MetricCard title="Avg Latency (P50)" value="245ms" trend={-5.2} icon={<Clock className="h-4 w-4" />} />
+        <MetricCard title="Error Rate" value="0.12%" trend={0.03} icon={<AlertTriangle className="h-4 w-4" />} />
         <MetricCard title="Throughput" value="1.2K req/s" icon={<Gauge className="h-4 w-4" />} />
         <MetricCard title="Active Traces" value="3,847" icon={<Activity className="h-4 w-4" />} />
       </div>
@@ -35,9 +35,9 @@ export default function ObservabilityDashboard() {
           <LineChart
             data={[]}
             lines={[
-              { key: 'p50', label: 'P50', color: '#3b82f6' },
-              { key: 'p95', label: 'P95', color: '#f59e0b' },
-              { key: 'p99', label: 'P99', color: '#ef4444' },
+              { dataKey: 'p50', name: 'P50', color: '#3b82f6' },
+              { dataKey: 'p95', name: 'P95', color: '#f59e0b' },
+              { dataKey: 'p99', name: 'P99', color: '#ef4444' },
             ]}
             xAxisKey="time"
           />

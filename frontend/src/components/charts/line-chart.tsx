@@ -1,8 +1,16 @@
 import { ResponsiveContainer, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 
+interface LineConfig {
+  dataKey?: string
+  key?: string
+  color: string
+  name?: string
+  label?: string
+}
+
 interface LineChartProps {
   data: Array<Record<string, unknown>>
-  lines: Array<{ dataKey: string; color: string; name?: string }>
+  lines: LineConfig[]
   xAxisKey: string
   height?: number
 }
@@ -16,17 +24,20 @@ export function LineChart({ data, lines, xAxisKey, height = 300 }: LineChartProp
         <YAxis className="text-xs" />
         <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }} />
         <Legend />
-        {lines.map((line) => (
-          <Line
-            key={line.dataKey}
-            type="monotone"
-            dataKey={line.dataKey}
-            stroke={line.color}
-            name={line.name || line.dataKey}
-            strokeWidth={2}
-            dot={false}
-          />
-        ))}
+        {lines.map((line) => {
+          const dk = line.dataKey || line.key || ''
+          return (
+            <Line
+              key={dk}
+              type="monotone"
+              dataKey={dk}
+              stroke={line.color}
+              name={line.name || line.label || dk}
+              strokeWidth={2}
+              dot={false}
+            />
+          )
+        })}
       </RechartsLineChart>
     </ResponsiveContainer>
   )

@@ -1,8 +1,16 @@
 import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 
+interface BarConfig {
+  dataKey?: string
+  key?: string
+  color: string
+  name?: string
+  label?: string
+}
+
 interface BarChartProps {
   data: Array<Record<string, unknown>>
-  bars: Array<{ dataKey: string; color: string; name?: string }>
+  bars: BarConfig[]
   xAxisKey: string
   height?: number
   stacked?: boolean
@@ -17,16 +25,19 @@ export function BarChart({ data, bars, xAxisKey, height = 300, stacked }: BarCha
         <YAxis className="text-xs" />
         <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }} />
         <Legend />
-        {bars.map((bar) => (
-          <Bar
-            key={bar.dataKey}
-            dataKey={bar.dataKey}
-            fill={bar.color}
-            name={bar.name || bar.dataKey}
-            stackId={stacked ? 'stack' : undefined}
-            radius={[4, 4, 0, 0]}
-          />
-        ))}
+        {bars.map((bar) => {
+          const dk = bar.dataKey || bar.key || ''
+          return (
+            <Bar
+              key={dk}
+              dataKey={dk}
+              fill={bar.color}
+              name={bar.name || bar.label || dk}
+              stackId={stacked ? 'stack' : undefined}
+              radius={[4, 4, 0, 0]}
+            />
+          )
+        })}
       </RechartsBarChart>
     </ResponsiveContainer>
   )

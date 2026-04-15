@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import Integer, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.cost import LLMRequestLog
@@ -56,7 +56,7 @@ class CostService:
             func.count().label("total_requests"),
             func.sum(LLMRequestLog.input_tokens).label("total_input_tokens"),
             func.sum(LLMRequestLog.output_tokens).label("total_output_tokens"),
-            func.avg(LLMRequestLog.cache_hit.cast(int)).label("cache_hit_rate"),
+            func.avg(LLMRequestLog.cache_hit.cast(Integer)).label("cache_hit_rate"),
         )
 
         if application_id:
