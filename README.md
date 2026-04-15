@@ -33,6 +33,34 @@ Prompt Edit → Run Evals → Quality Gate → Canary (10%) → Monitor → Full
 
 ---
 
+## How It Works
+
+The platform sits between your LLM-powered applications and the LLM providers (OpenAI, Anthropic, etc.). Your applications call the platform's **Gateway API** instead of calling LLM providers directly. The platform then manages everything in between — which prompt to use, which model to route to, whether to serve a cached response, and how to trace the result.
+
+### The Core Loop
+
+**1. Author prompts in a central registry** — Engineers write prompt templates with variables like `{{user_question}}` and `{{context}}` in a Monaco-based editor. Every edit is versioned with full diff history. Prompts are tagged as `experimental`, `staging`, or `production`.
+
+**2. Test before anyone sees it** — Try prompts interactively in a built-in playground with sample inputs. Then run automated evaluation suites against golden datasets (curated Q&A pairs) and adversarial datasets (edge cases). The platform scores responses on factuality, relevance, safety, format compliance, and latency — plus any custom metrics you define in Python.
+
+**3. Gate deployments on quality** — When a prompt is ready, the CI/CD pipeline compares eval scores against the current production baseline. If any metric drops below a configurable threshold, deployment is blocked. No manual review needed for the go/no-go decision — the eval results decide.
+
+**4. Roll out gradually** — Approved changes deploy as a canary to 10% of traffic. The platform monitors quality metrics in real time. If scores hold, traffic ramps to 25% → 50% → 100%. If quality degrades at any stage, the platform automatically rolls back to the previous version.
+
+**5. Optimize costs continuously** — Not every query needs the most expensive model. The platform's routing engine sends simple queries (FAQs, lookups) to cheaper models and reserves expensive models for complex reasoning. A semantic cache returns stored responses for near-duplicate queries without calling the LLM at all.
+
+**6. Observe everything** — Every LLM call is traced end-to-end: the rendered prompt, raw response, latency, token count, cost, and eval scores. Pre-built Grafana dashboards surface request volume, latency distributions, error rates, cost trends, and quality over time. Alerts fire when metrics breach thresholds.
+
+### Running an A/B Test
+
+Select 2+ prompt variants, set a traffic split (e.g., 50/50), and define a duration. Production requests are automatically routed to variants. A live dashboard compares quality, latency, and cost across variants. The platform calculates statistical significance (Welch's t-test, default p < 0.05). Once a winner is confirmed, one click promotes it to production.
+
+### Human Evaluation
+
+For subjective quality that automated metrics can't capture, create evaluation campaigns. Assign domain experts (e.g., a support lead rating support responses) to a queue of LLM outputs. Evaluators rate responses on configurable dimensions (helpfulness, accuracy, tone) or do blind side-by-side comparisons. The platform tracks inter-rater agreement to ensure scoring consistency.
+
+---
+
 ## Features
 
 ### Prompt Management
