@@ -31,7 +31,9 @@ services:
     build: ./frontend
     ports: ["3000:3000"]
     depends_on: [backend]
-    volumes: ["./frontend/src:/app/src"]
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/vite.config.ts:/app/vite.config.ts
 
   postgres:
     image: postgres:16

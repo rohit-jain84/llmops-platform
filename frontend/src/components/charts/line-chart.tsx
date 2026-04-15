@@ -7,7 +7,7 @@ interface LineChartProps {
   height?: number
 }
 
-export default function LineChart({ data, lines, xAxisKey, height = 300 }: LineChartProps) {
+export function LineChart({ data, lines, xAxisKey, height = 300 }: LineChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsLineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -31,3 +31,5 @@ export default function LineChart({ data, lines, xAxisKey, height = 300 }: LineC
     </ResponsiveContainer>
   )
 }
+
+export default LineChart

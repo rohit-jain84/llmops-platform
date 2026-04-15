@@ -11,7 +11,7 @@ interface MetricCardProps {
   className?: string
 }
 
-export default function MetricCard({ title, value, trend, trendLabel, icon, className }: MetricCardProps) {
+export function MetricCard({ title, value, trend, trendLabel, icon, className }: MetricCardProps) {
   return (
     <Card className={className}>
       <CardContent className="p-6">
@@ -36,3 +36,5 @@ export default function MetricCard({ title, value, trend, trendLabel, icon, clas
     </Card>
   )
 }
+
+export default MetricCard

@@ -4,6 +4,7 @@ description.txt
 
 # ===== AI Tool Config =====
 CLAUDE.md
+.playwright-mcp/
 
 # ===== Python =====
 __pycache__/
@@ -57,3 +58,6 @@ grafana_data/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ===== Test Artifacts =====
+test-*.png

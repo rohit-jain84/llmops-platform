@@ -8,7 +8,7 @@ interface BarChartProps {
   stacked?: boolean
 }
 
-export default function BarChart({ data, bars, xAxisKey, height = 300, stacked }: BarChartProps) {
+export function BarChart({ data, bars, xAxisKey, height = 300, stacked }: BarChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsBarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -31,3 +31,5 @@ export default function BarChart({ data, bars, xAxisKey, height = 300, stacked }
     </ResponsiveContainer>
   )
 }
+
+export default BarChart

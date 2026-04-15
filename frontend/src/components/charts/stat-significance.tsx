@@ -5,7 +5,7 @@ interface StatSignificanceProps {
   threshold?: number
 }
 
-export default function StatSignificance({ pValue, threshold = 0.05 }: StatSignificanceProps) {
+export function StatSignificance({ pValue, threshold = 0.05 }: StatSignificanceProps) {
   if (pValue === null) {
     return <span className="text-sm text-muted-foreground">Not enough data</span>
   }
@@ -30,3 +30,5 @@ export default function StatSignificance({ pValue, threshold = 0.05 }: StatSigni
     </div>
   )
 }
+
+export default StatSignificance

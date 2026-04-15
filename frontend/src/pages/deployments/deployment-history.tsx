@@ -49,7 +49,7 @@ export default function DeploymentHistory() {
             )}
             {canPromote && (
               <Button onClick={() => promote.mutate(id!)} disabled={promote.isPending}>
-                <ArrowUpCircle className="mr-2 h-4 w-4" />Promote ({deployment.canary_pct}% -> next)
+                <ArrowUpCircle className="mr-2 h-4 w-4" />Promote ({deployment.canary_pct}% {"→"} next)
               </Button>
             )}
           </div>
