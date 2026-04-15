@@ -10,6 +10,20 @@ This platform solves all of that. It gives AI/ML teams a unified interface to **
 Prompt Edit → Run Evals → Quality Gate → Canary (10%) → Monitor → Full Rollout
 ```
 
+### Screenshots
+
+| Dashboard | Cost Analytics |
+|:---------:|:--------------:|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Cost Analytics](docs/screenshots/cost-analytics.png) |
+
+| Experiments (A/B Testing) | Evaluations |
+|:-------------------------:|:-----------:|
+| ![Experiments](docs/screenshots/experiments.png) | ![Evaluations](docs/screenshots/evaluations.png) |
+
+| Deployments | API Documentation |
+|:-----------:|:-----------------:|
+| ![Deployments](docs/screenshots/deployments.png) | ![API Docs](docs/screenshots/api-docs.png) |
+
 ---
 
 ## What Problems Does It Solve?
@@ -117,6 +131,53 @@ For subjective quality that automated metrics can't capture, create evaluation c
 **A/B testing response styles** — A prompt engineer tests bullet-point vs. paragraph answers with a 50/50 split. After 1,000 requests, bullet-points score +0.4 on helpfulness (statistically significant). One click promotes the winner to production.
 
 **Catching a regression automatically** — An engineer pushes a prompt change. The CI/CD pipeline runs evals and detects factuality dropped from 4.2 to 3.6 — below the 3.8 threshold. Deployment is blocked automatically with a link to the failing test cases.
+
+---
+
+## Architecture
+
+```
+                         ┌─────────────────────────────────┐
+                         │       Your LLM Application      │
+                         └──────────────┬──────────────────┘
+                                        │  POST /api/v1/gateway/chat
+                                        ▼
+┌────────────┐          ┌──────────────────────────────────┐          ┌─────────────────┐
+│  Frontend  │◄────────►│          FastAPI Backend          │────────►│  LLM Providers  │
+│  React UI  │          │                                  │         │  (via litellm)  │
+│            │          │  ┌──────────┐  ┌──────────────┐  │         │                 │
+│ - Prompts  │          │  │ Gateway  │  │  Eval Engine │  │         │ - OpenAI        │
+│ - A/B Tests│          │  │ Service  │  │  (5 metrics) │  │         │ - Anthropic     │
+│ - Evals    │          │  └────┬─────┘  └──────┬───────┘  │         │ - 100+ more     │
+│ - Cost     │          │       │               │          │         └─────────────────┘
+│ - Deploy   │          │  ┌────▼─────┐  ┌──────▼───────┐  │
+│ - Observe  │          │  │ Routing  │  │Celery Workers│  │
+│            │          │  │ Engine   │  │ (async evals)│  │
+└────────────┘          │  └──────────┘  └──────────────┘  │
+                         └──────┬────────────┬─────────────┘
+                                │            │
+              ┌─────────────────┼────────────┼──────────────────┐
+              │                 │            │                  │
+      ┌───────▼──────┐  ┌──────▼───┐  ┌─────▼──────┐  ┌───────▼───────┐
+      │ PostgreSQL   │  │  Redis   │  │   Qdrant   │  │   LangFuse    │
+      │              │  │          │  │            │  │               │
+      │ - Prompts    │  │ - Cache  │  │ - Semantic │  │ - LLM Traces │
+      │ - Versions   │  │ - Queue  │  │   Cache    │  │ - Latency    │
+      │ - Eval Data  │  │ - Tasks  │  │ - Vectors  │  │ - Costs      │
+      │ - Deploys    │  │          │  │            │  │               │
+      └──────────────┘  └──────────┘  └────────────┘  └───────────────┘
+                                                              │
+                         ┌────────────────────────────────────┘
+                         │
+              ┌──────────▼──────────┐
+              │  Grafana + Prometheus│
+              │  + OTel Collector   │
+              │                     │
+              │ - 3 Pre-built       │
+              │   Dashboards        │
+              │ - Alerting          │
+              └─────────────────────┘
+```
 
 ---
 
@@ -451,6 +512,34 @@ The platform ships with 3 pre-built Grafana dashboards accessible at `http://loc
 - **Deployment health** — Canary rollout stages with quality gates
 
 > To view dashboards: run `docker compose up -d`, then open http://localhost:3002 (default credentials: admin/admin).
+
+## How This Compares to Alternatives
+
+| Capability | This Platform | LangSmith | Weights & Biases | PromptLayer |
+|-----------|:---:|:---:|:---:|:---:|
+| Prompt versioning & registry | Yes | Yes | No | Yes |
+| A/B testing with traffic splitting | Yes | No | No | No |
+| Automated eval (5 built-in metrics) | Yes | Yes | Partial | No |
+| Human evaluation campaigns | Yes | Partial | No | No |
+| Eval-gated CI/CD pipeline | Yes | No | No | No |
+| Canary deployments with auto-rollback | Yes | No | No | No |
+| Intelligent model routing | Yes | No | No | No |
+| Semantic caching (Qdrant) | Yes | No | No | No |
+| Cost analytics & budget alerts | Yes | Partial | No | Partial |
+| Self-hosted / open source | Yes | No | No | No |
+
+The key differentiator is the **end-to-end deployment pipeline**: most tools handle observability or prompt management, but none combine eval-gated CI/CD, canary rollouts, intelligent routing, and cost optimization in a single self-hosted platform.
+
+## Key Metrics & Success Criteria
+
+| Metric | Target |
+|--------|--------|
+| A/B test detects statistically significant winner | p < 0.05 on real eval sets |
+| Custom eval metric correlation with human judgment | Spearman rho > 0.7 on 100+ samples |
+| Cost reduction via model routing | > 30% average cost reduction vs. always-use-best-model |
+| CI/CD pipeline catches quality regressions | 100% of intentional regressions blocked |
+| Dashboard metric delay | < 30 seconds from request to dashboard visibility |
+| Alert latency on quality degradation | < 2 minutes |
 
 ## Scope — What This Does NOT Do
 
