@@ -229,6 +229,203 @@ All endpoints under `/api/v1/`. Authentication via JWT Bearer token.
 
 Full API documentation available at http://localhost:8000/docs when running.
 
+## Integration Guide
+
+This platform acts as a proxy between your LLM-powered application and LLM providers. Instead of calling OpenAI/Anthropic directly, your app calls the platform's Gateway API — and the platform handles prompt selection, model routing, caching, tracing, and cost tracking transparently.
+
+### Step 1: Authenticate
+
+```bash
+# Register a user (or use the seeded demo accounts)
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "dev@example.com", "password": "secure_password", "role": "engineer"}'
+
+# Login to get a JWT token
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "dev@example.com", "password": "secure_password"}'
+
+# Response: {"access_token": "eyJ...", "refresh_token": "eyJ...", "token_type": "bearer"}
+```
+
+Use the `access_token` as a Bearer token in all subsequent requests.
+
+### Step 2: Register Your Application
+
+```bash
+curl -X POST http://localhost:8000/api/v1/applications \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Customer Support Bot", "description": "Handles tier-1 support queries"}'
+
+# Response: {"id": "app-uuid-here", "name": "Customer Support Bot", ...}
+```
+
+### Step 3: Create a Prompt Template and Version
+
+```bash
+# Create a template
+curl -X POST http://localhost:8000/api/v1/applications/$APP_ID/prompts \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "support-reply", "description": "Generates support responses"}'
+
+# Create a version with Jinja2 template syntax
+curl -X POST http://localhost:8000/api/v1/prompts/$TEMPLATE_ID/versions \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "You are a helpful support agent.\n\nCustomer question: {{user_question}}\nContext: {{context}}\n\nProvide a concise, accurate answer.",
+    "variables": {"user_question": "string", "context": "string"},
+    "tag": "production",
+    "commit_message": "Initial support prompt"
+  }'
+```
+
+### Step 4: Call the Gateway from Your Application
+
+This is the main integration point. Replace your direct LLM API calls with this:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/gateway/chat \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "application_id": "app-uuid",
+    "prompt_template_id": "template-uuid",
+    "variables": {
+      "user_question": "How do I reset my password?",
+      "context": "Users can reset passwords via Settings > Security > Reset Password."
+    },
+    "user_id": "end-user-123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "response": "To reset your password, go to Settings > Security > Reset Password...",
+  "model": "gpt-4o-mini",
+  "latency_ms": 823,
+  "input_tokens": 142,
+  "output_tokens": 67,
+  "cost_usd": 0.00031,
+  "cache_hit": false,
+  "trace_id": "trace-abc-123",
+  "variant_id": null
+}
+```
+
+Behind the scenes, the gateway:
+1. Resolves the active prompt version (respects A/B test routing if an experiment is running)
+2. Renders the Jinja2 template with your variables
+3. Checks the semantic cache for similar recent queries
+4. Routes to the optimal model based on complexity rules
+5. Calls the LLM via litellm and logs the full trace to LangFuse
+6. Records cost, tokens, and latency for dashboards
+
+### Step 5: Set Up Evaluations
+
+```bash
+# Create a golden dataset
+curl -X POST http://localhost:8000/api/v1/eval/datasets \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"application_id": "app-uuid", "name": "Support Golden Set", "dataset_type": "golden"}'
+
+# Add test cases in bulk
+curl -X POST http://localhost:8000/api/v1/eval/datasets/$DATASET_ID/items \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"input_vars": {"user_question": "How do I reset my password?", "context": "..."}, "expected_output": "Go to Settings > Security..."},
+      {"input_vars": {"user_question": "What are your hours?", "context": "..."}, "expected_output": "We are available 24/7..."}
+    ]
+  }'
+
+# Trigger an eval run
+curl -X POST http://localhost:8000/api/v1/eval/runs \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt_version_id": "version-uuid", "dataset_id": "dataset-uuid", "trigger": "manual"}'
+
+# Check results
+curl http://localhost:8000/api/v1/eval/runs/$RUN_ID \
+  -H "Authorization: Bearer $TOKEN"
+
+# Response includes: {"aggregate_scores": {"factuality": 4.2, "relevance": 4.5, "safety": 4.8}, ...}
+```
+
+### Step 6: Run an A/B Test
+
+```bash
+# Create an experiment with two prompt variants
+curl -X POST http://localhost:8000/api/v1/experiments \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "application_id": "app-uuid",
+    "name": "Concise vs Detailed Replies",
+    "variants": [
+      {"prompt_version_id": "version-1-uuid", "traffic_pct": 50, "label": "Control"},
+      {"prompt_version_id": "version-2-uuid", "traffic_pct": 50, "label": "Concise"}
+    ]
+  }'
+
+# Start the experiment — gateway will now route traffic to variants
+curl -X POST http://localhost:8000/api/v1/experiments/$EXP_ID/start \
+  -H "Authorization: Bearer $TOKEN"
+
+# Check live results (repeat until statistically significant)
+curl http://localhost:8000/api/v1/experiments/$EXP_ID/results \
+  -H "Authorization: Bearer $TOKEN"
+
+# Promote the winner to production
+curl -X POST http://localhost:8000/api/v1/experiments/$EXP_ID/promote-winner \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Step 7: Deploy Safely with Canary Rollouts
+
+```bash
+# Create a canary deployment (starts at 10% traffic)
+curl -X POST http://localhost:8000/api/v1/deployments \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt_version_id": "new-version-uuid", "canary_pct": 10}'
+
+# Monitor quality, then promote through stages: 10% → 25% → 50% → 100%
+curl -X POST http://localhost:8000/api/v1/deployments/$DEPLOY_ID/promote \
+  -H "Authorization: Bearer $TOKEN"
+
+# If something goes wrong, rollback instantly
+curl -X POST http://localhost:8000/api/v1/deployments/$DEPLOY_ID/rollback \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### CI/CD Integration
+
+Use the CI/CD endpoints to gate deployments on eval quality in your GitHub Actions (or any CI system):
+
+```bash
+# Trigger eval from CI pipeline
+curl -X POST http://localhost:8000/api/v1/cicd/trigger-eval \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt_version_id": "version-uuid", "dataset_id": "dataset-uuid"}'
+
+# Poll until complete, then check the quality gate
+curl http://localhost:8000/api/v1/cicd/eval-status/$RUN_ID \
+  -H "Authorization: Bearer $TOKEN"
+
+# Response: {"status": "completed", "quality_gate_passed": true, "aggregate_scores": {...}}
+# If quality_gate_passed is false, fail the CI build
+```
+
+The quality gate passes when all LLM-judge metrics (factuality, relevance, safety) score >= 3.5 out of 5.
+
 ## Observability Dashboards
 
 The platform ships with 3 pre-built Grafana dashboards accessible at `http://localhost:3002` after `docker compose up`:
