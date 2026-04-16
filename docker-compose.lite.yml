@@ -11,7 +11,7 @@
 services:
   backend:
     build: ./backend
-    ports: ["8000:8000"]
+    ports: ["8200:8000"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -19,25 +19,21 @@ services:
         condition: service_healthy
     env_file: .env
     environment:
-      # Disable optional services that aren't running in lite mode
       LANGFUSE_SECRET_KEY: ""
       LANGFUSE_PUBLIC_KEY: ""
       OTEL_EXPORTER_OTLP_ENDPOINT: ""
       QDRANT_URL: ""
-    volumes: ["./backend/app:/app/app"]
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    mem_limit: 2g
 
   frontend:
     build: ./frontend
-    ports: ["3000:3000"]
+    ports: ["3200:80"]
     depends_on: [backend]
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/vite.config.ts:/app/vite.config.ts
+    mem_limit: 256m
 
   postgres:
-    image: postgres:16
-    ports: ["5432:5432"]
+    image: postgres:16-alpine
+    ports: ["5436:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
     environment:
       POSTGRES_DB: llmops
@@ -48,16 +44,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    mem_limit: 1g
 
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    ports: ["6386:6379"]
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
+    mem_limit: 256m
 
 volumes:
   pgdata:

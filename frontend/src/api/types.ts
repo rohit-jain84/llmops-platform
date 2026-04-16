@@ -107,6 +107,9 @@ export interface HumanEvalCampaign {
   created_at: string
   total_assignments: number
   completed_assignments: number
+  items?: { id: string; [key: string]: unknown }[]
+  total_items?: number
+  completed_items?: number
 }
 
 export interface CostAnalytics {

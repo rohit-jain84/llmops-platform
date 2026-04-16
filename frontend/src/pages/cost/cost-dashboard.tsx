@@ -2,7 +2,6 @@ import PageHeader from '@/components/layout/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import MetricCard from '@/components/charts/metric-card'
 import { LineChart } from '@/components/charts/line-chart'
-import { BarChart } from '@/components/charts/bar-chart'
 import LoadingSkeleton from '@/components/common/loading-skeleton'
 import { useCostAnalytics } from '@/hooks/use-cost'
 import { formatCurrency } from '@/lib/utils'
@@ -13,6 +12,17 @@ export default function CostDashboard() {
 
   if (isLoading) return <LoadingSkeleton />
 
+  const totalCost = Number(analytics?.total_cost_usd ?? 0)
+  const totalRequests = analytics?.total_requests ?? 0
+  const avgCost = totalRequests > 0 ? totalCost / totalRequests : 0
+  const cacheHitRate = analytics?.cache_hit_rate ?? 0
+
+  const dailySpend = (analytics?.breakdown ?? []).map((b: { period: string; cost: number; requests: number }) => ({
+    date: b.period.split(' ')[0],
+    spend: b.cost,
+    requests: b.requests,
+  }))
+
   return (
     <div className="space-y-6">
       <PageHeader title="Cost Analytics" description="Monitor and optimize LLM spending" />
@@ -20,24 +30,22 @@ export default function CostDashboard() {
       <div className="grid grid-cols-4 gap-4">
         <MetricCard
           title="Total Spend (30d)"
-          value={formatCurrency(analytics?.total_spend ?? 0)}
-          trend={analytics?.spend_trend}
+          value={formatCurrency(totalCost)}
           icon={<DollarSign className="h-4 w-4" />}
         />
         <MetricCard
           title="Avg Cost/Query"
-          value={`$${(analytics?.avg_cost_per_query ?? 0).toFixed(4)}`}
-          trend={analytics?.cost_per_query_trend}
+          value={`$${avgCost.toFixed(4)}`}
           icon={<BarChart3 className="h-4 w-4" />}
         />
         <MetricCard
-          title="Cache Savings"
-          value={formatCurrency(analytics?.cache_savings ?? 0)}
+          title="Total Requests"
+          value={totalRequests.toLocaleString()}
           icon={<Zap className="h-4 w-4" />}
         />
         <MetricCard
           title="Cache Hit Rate"
-          value={`${((analytics?.cache_hit_rate ?? 0) * 100).toFixed(1)}%`}
+          value={`${(cacheHitRate * 100).toFixed(1)}%`}
           icon={<TrendingDown className="h-4 w-4" />}
         />
       </div>
@@ -47,34 +55,23 @@ export default function CostDashboard() {
           <CardHeader><CardTitle className="text-sm">Daily Spend Trend</CardTitle></CardHeader>
           <CardContent>
             <LineChart
-              data={analytics?.daily_spend ?? []}
+              data={dailySpend}
               lines={[{ dataKey: 'spend', name: 'Spend ($)', color: '#3b82f6' }]}
               xAxisKey="date"
             />
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-sm">Cost by Model</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">Daily Requests</CardTitle></CardHeader>
           <CardContent>
-            <BarChart
-              data={analytics?.cost_by_model ?? []}
-              bars={[{ dataKey: 'cost', name: 'Cost ($)', color: '#8b5cf6' }]}
-              xAxisKey="model"
+            <LineChart
+              data={dailySpend}
+              lines={[{ dataKey: 'requests', name: 'Requests', color: '#8b5cf6' }]}
+              xAxisKey="date"
             />
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Cost by Application</CardTitle></CardHeader>
-        <CardContent>
-          <BarChart
-            data={analytics?.cost_by_app ?? []}
-            bars={[{ dataKey: 'cost', name: 'Cost ($)', color: '#10b981' }]}
-            xAxisKey="app_name"
-          />
-        </CardContent>
-      </Card>
     </div>
   )
 }

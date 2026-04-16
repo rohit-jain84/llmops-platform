@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DataTable } from '@/components/ui/data-table'
 import EmptyState from '@/components/common/empty-state'
 import LoadingSkeleton from '@/components/common/loading-skeleton'
+import { useApplications } from '@/hooks/use-applications'
 import { usePrompts } from '@/hooks/use-prompts'
 import { formatDate } from '@/lib/utils'
 import { promptsApi } from '@/api/prompts'
@@ -13,7 +14,8 @@ import type { PromptTemplate } from '@/api/types'
 import { Plus } from 'lucide-react'
 
 export default function PromptsList() {
-  const [selectedApp] = useState<string>('')
+  const { data: applications, isLoading: appsLoading } = useApplications()
+  const [selectedApp, setSelectedApp] = useState<string>('')
   const { data: prompts, isLoading, refetch } = usePrompts(selectedApp)
   const navigate = useNavigate()
   const [showCreate, setShowCreate] = useState(false)
@@ -21,6 +23,13 @@ export default function PromptsList() {
   const [description, setDescription] = useState('')
   const [appId, setAppId] = useState('')
   const [creating, setCreating] = useState(false)
+
+  // Auto-select the first application when the list loads and none is selected
+  useEffect(() => {
+    if (!selectedApp && applications?.length) {
+      setSelectedApp(applications[0].id)
+    }
+  }, [selectedApp, applications])
 
   const handleCreate = async () => {
     if (!name || !appId) return
@@ -40,14 +49,29 @@ export default function PromptsList() {
     }
   }
 
-  if (isLoading) return <LoadingSkeleton lines={5} />
+  if (appsLoading || isLoading) return <LoadingSkeleton lines={5} />
 
   return (
     <div>
       <PageHeader
         title="Prompts"
         description="Manage prompt templates and versions"
-        actions={<Button onClick={() => setShowCreate(true)}><Plus className="mr-2 h-4 w-4" />New Prompt</Button>}
+        actions={
+          <div className="flex items-center gap-3">
+            {applications && applications.length > 1 && (
+              <select
+                className="rounded-md border px-3 py-2 text-sm bg-background"
+                value={selectedApp}
+                onChange={(e) => setSelectedApp(e.target.value)}
+              >
+                {applications.map((app) => (
+                  <option key={app.id} value={app.id}>{app.name}</option>
+                ))}
+              </select>
+            )}
+            <Button onClick={() => setShowCreate(true)}><Plus className="mr-2 h-4 w-4" />New Prompt</Button>
+          </div>
+        }
       />
 
       {showCreate && (
@@ -55,8 +79,21 @@ export default function PromptsList() {
           <CardHeader><CardTitle className="text-sm">Create Prompt Template</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <label className="text-sm font-medium">Application ID</label>
-              <input className="mt-1 w-full rounded-md border px-3 py-2 text-sm" value={appId} onChange={(e) => setAppId(e.target.value)} placeholder="app-xxx" />
+              <label className="text-sm font-medium">Application</label>
+              {applications?.length ? (
+                <select
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                  value={appId}
+                  onChange={(e) => setAppId(e.target.value)}
+                >
+                  <option value="">Select an application</option>
+                  {applications.map((app) => (
+                    <option key={app.id} value={app.id}>{app.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input className="mt-1 w-full rounded-md border px-3 py-2 text-sm" value={appId} onChange={(e) => setAppId(e.target.value)} placeholder="app-xxx" />
+              )}
             </div>
             <div>
               <label className="text-sm font-medium">Name</label>
