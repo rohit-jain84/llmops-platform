@@ -39,6 +39,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         if request.url.path in SKIP_PATHS:
             return await call_next(request)
+        if not settings.rate_limit_enabled:
+            return await call_next(request)
 
         limit = settings.rate_limit_requests
         window = settings.rate_limit_window_seconds

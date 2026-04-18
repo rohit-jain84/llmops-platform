@@ -8,11 +8,16 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
-from app.database import get_db
-from app.main import app
-from app.middleware.auth import create_access_token, hash_password
-from app.models import Base
-from app.models.user import User
+
+# Disable rate limiting for tests — the in-window counter accumulates across
+# tests (asyncio loop scope is session) and starves later tests with 429s.
+settings.rate_limit_enabled = False
+
+from app.database import get_db  # noqa: E402
+from app.main import app  # noqa: E402
+from app.middleware.auth import create_access_token, hash_password  # noqa: E402
+from app.models import Base  # noqa: E402
+from app.models.user import User  # noqa: E402
 
 TEST_DATABASE_URL = settings.database_url
 

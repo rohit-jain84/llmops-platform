@@ -115,6 +115,9 @@ class ExperimentService:
         flag_modified(exp_result, "metrics")
 
         await self.db.flush()
+        # Refresh to populate server-default columns (e.g. updated_at) so the
+        # response serializer doesn't trigger a lazy-load in a sync context.
+        await self.db.refresh(exp_result)
         return exp_result
 
     async def compute_significance(
@@ -183,6 +186,10 @@ class ExperimentService:
             best_result.is_winner = True
 
         await self.db.flush()
+        # Refresh all results so server-default columns (updated_at) are
+        # populated before the response serializer accesses them.
+        for r in results:
+            await self.db.refresh(r)
         return results
 
     async def promote_winner(self, experiment_id: uuid.UUID) -> Experiment:
