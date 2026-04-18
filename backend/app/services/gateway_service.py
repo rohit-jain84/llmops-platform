@@ -63,7 +63,11 @@ class GatewayService:
 
         # 3. Semantic cache check
         with tracer.start_as_current_span("cache.lookup", attributes={"app_id": str(request.application_id)}):
-            cached = await self.cache_svc.lookup(request.application_id, rendered_input)
+            try:
+                cached = await self.cache_svc.lookup(request.application_id, rendered_input)
+            except Exception as e:
+                logger.warning(f"Cache lookup failed, treating as miss: {e}")
+                cached = None
         if cached:
             await self.cost_svc.log_request(
                 application_id=request.application_id,
@@ -150,13 +154,16 @@ class GatewayService:
 
         # 8. Store in semantic cache
         with tracer.start_as_current_span("cache.store", attributes={"model": target_model}):
-            await self.cache_svc.store(
-                request.application_id,
-                rendered_input,
-                response_text,
-                target_model,
-                str(prompt_version_id),
-            )
+            try:
+                await self.cache_svc.store(
+                    request.application_id,
+                    rendered_input,
+                    response_text,
+                    target_model,
+                    str(prompt_version_id),
+                )
+            except Exception as e:
+                logger.warning(f"Cache store failed, continuing without caching: {e}")
 
         # 9. Log cost and usage
         await self.cost_svc.log_request(

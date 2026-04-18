@@ -33,12 +33,14 @@ class ExperimentService:
 
         for v in data.variants:
             variant = ExperimentVariant(
+                id=uuid.uuid4(),
                 experiment_id=experiment.id,
                 prompt_version_id=v.prompt_version_id,
                 traffic_pct=v.traffic_pct,
                 label=v.label,
             )
             self.db.add(variant)
+            await self.db.flush()
 
             # Create result tracker
             result = ExperimentResult(
