@@ -1,5 +1,6 @@
 # ===== Planning & Documentation (not part of project) =====
 *.html
+!frontend/index.html
 description.txt
 
 # ===== AI Tool Config =====
