@@ -13,6 +13,13 @@ class EvalDatasetCreate(BaseModel):
     description: str | None = None
 
 
+class EvalDatasetRecentRun(BaseModel):
+    id: uuid.UUID
+    status: str
+    overall_score: float | None = None
+    created_at: datetime
+
+
 class EvalDatasetResponse(BaseModel):
     id: uuid.UUID
     application_id: uuid.UUID
@@ -21,6 +28,7 @@ class EvalDatasetResponse(BaseModel):
     description: str | None
     created_at: datetime
     item_count: int = 0
+    recent_runs: list[EvalDatasetRecentRun] = []
 
     model_config = {"from_attributes": True}
 

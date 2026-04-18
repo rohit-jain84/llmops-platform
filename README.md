@@ -12,17 +12,21 @@ Prompt Edit → Run Evals → Quality Gate → Canary (10%) → Monitor → Full
 
 ### Screenshots
 
-| Dashboard | Cost Analytics |
-|:---------:|:--------------:|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Cost Analytics](docs/screenshots/cost-analytics.png) |
+**Dashboard** — 2,760 requests, $3.55 spend, 25% cache hit rate, 1.74M tokens tracked. Request Volume & Cost line chart over three weeks.
 
-| Experiments (A/B Testing) | Evaluations |
-|:-------------------------:|:-----------:|
-| ![Experiments](docs/screenshots/experiments.png) | ![Evaluations](docs/screenshots/evaluations.png) |
+![Dashboard](docs/screenshots/dashboard.png)
 
-| Deployments | API Documentation |
-|:-----------:|:-----------------:|
-| ![Deployments](docs/screenshots/deployments.png) | ![API Docs](docs/screenshots/api-docs.png) |
+**Deployments** — Full Staging → Canary → Production pipeline with one version rolling out at 25% canary, four rolled-out production versions, and an All Deployments audit table below.
+
+![Deployments](docs/screenshots/deployments.png)
+
+**Evaluations** — 4 golden datasets, 8 completed runs, 0.82 average score. Every run shows dataset name, status, score percentage, and run date — click-through to per-question breakdowns.
+
+![Evaluations](docs/screenshots/evaluations.png)
+
+**Observability** — 245ms P50 latency, 0.12% error rate, 1.2K req/s throughput, 3,847 active traces. Grafana dashboard links for per-endpoint latency, error rates, and model performance.
+
+![Observability](docs/screenshots/observability.png)
 
 ---
 

@@ -54,8 +54,29 @@ async def list_datasets(
             select(func.count()).where(EvalDatasetItem.dataset_id == ds.id)
         )
         item_count = count_result.scalar() or 0
+        runs_result = await db.execute(
+            select(EvalRun)
+            .where(EvalRun.dataset_id == ds.id)
+            .order_by(EvalRun.created_at.desc())
+            .limit(5)
+        )
+        runs = runs_result.scalars().all()
+        recent_runs = []
+        for r in runs:
+            overall = None
+            if r.aggregate_scores:
+                scores = [v for v in r.aggregate_scores.values() if isinstance(v, (int, float))]
+                if scores:
+                    overall = sum(scores) / len(scores) / 5.0
+            recent_runs.append({
+                "id": r.id,
+                "status": r.status,
+                "overall_score": overall,
+                "created_at": r.created_at,
+            })
         resp = EvalDatasetResponse.model_validate(ds)
         resp.item_count = item_count
+        resp.recent_runs = recent_runs
         response.append(resp)
     return response
 
