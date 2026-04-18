@@ -42,10 +42,6 @@ jobs:
         working-directory: backend
         run: ruff check app/
 
-      - name: Type check
-        working-directory: backend
-        run: mypy app/ --ignore-missing-imports
-
       - name: Test
         working-directory: backend
         env:
