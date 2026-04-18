@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom'
 import PageHeader from '@/components/layout/page-header'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DataTable } from '@/components/ui/data-table'
 import MetricCard from '@/components/charts/metric-card'
@@ -11,11 +10,11 @@ import { CheckCircle, XCircle, BarChart3 } from 'lucide-react'
 
 interface EvalResultRow {
   id: string
-  input: string
-  expected: string
-  actual: string
-  score: number
-  metrics: Record<string, number>
+  input?: string
+  expected?: string
+  actual?: string
+  score?: number
+  metrics?: Record<string, number>
   [key: string]: unknown
 }
 
@@ -72,8 +71,8 @@ export default function EvalRunDetail() {
           {
             key: 'score', header: 'Score', render: (r) => (
               <div className="flex items-center gap-1">
-                {r.score >= 0.8 ? <CheckCircle className="h-3 w-3 text-green-500" /> : <XCircle className="h-3 w-3 text-red-500" />}
-                <span>{(r.score * 100).toFixed(0)}%</span>
+                {(r.score ?? 0) >= 0.8 ? <CheckCircle className="h-3 w-3 text-green-500" /> : <XCircle className="h-3 w-3 text-red-500" />}
+                <span>{((r.score ?? 0) * 100).toFixed(0)}%</span>
               </div>
             ),
           },

@@ -4,10 +4,12 @@ Revision ID: 001
 Revises: None
 Create Date: 2026-04-08
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
 from alembic import op
 
 revision: str = "001"
@@ -86,7 +88,9 @@ def upgrade() -> None:
         "experiment_variants",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("experiment_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("experiments.id"), nullable=False),
-        sa.Column("prompt_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=False),
+        sa.Column(
+            "prompt_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=False
+        ),
         sa.Column("traffic_pct", sa.Integer, nullable=False),
         sa.Column("label", sa.String(100), nullable=False),
     )
@@ -131,7 +135,9 @@ def upgrade() -> None:
     op.create_table(
         "eval_runs",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("prompt_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=False),
+        sa.Column(
+            "prompt_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=False
+        ),
         sa.Column("dataset_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("eval_datasets.id"), nullable=False),
         sa.Column("status", sa.String(20), nullable=False, server_default="pending"),
         sa.Column("trigger", sa.String(50), nullable=False, server_default="manual"),
@@ -147,7 +153,9 @@ def upgrade() -> None:
         "eval_results",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("eval_run_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("eval_runs.id"), nullable=False),
-        sa.Column("dataset_item_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("eval_dataset_items.id"), nullable=False),
+        sa.Column(
+            "dataset_item_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("eval_dataset_items.id"), nullable=False
+        ),
         sa.Column("llm_response", sa.Text, nullable=True),
         sa.Column("scores", postgresql.JSONB, nullable=True),
         sa.Column("latency_ms", sa.Integer, nullable=True),
@@ -173,7 +181,9 @@ def upgrade() -> None:
     op.create_table(
         "human_eval_assignments",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("campaign_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("human_eval_campaigns.id"), nullable=False),
+        sa.Column(
+            "campaign_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("human_eval_campaigns.id"), nullable=False
+        ),
         sa.Column("evaluator_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("eval_result_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("eval_results.id"), nullable=False),
         sa.Column("ratings", postgresql.JSONB, nullable=True),
@@ -188,8 +198,15 @@ def upgrade() -> None:
         "llm_request_log",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("application_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("applications.id"), nullable=False),
-        sa.Column("prompt_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=True),
-        sa.Column("experiment_variant_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("experiment_variants.id"), nullable=True),
+        sa.Column(
+            "prompt_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=True
+        ),
+        sa.Column(
+            "experiment_variant_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("experiment_variants.id"),
+            nullable=True,
+        ),
         sa.Column("model", sa.String(100), nullable=False),
         sa.Column("input_tokens", sa.Integer, nullable=False, server_default="0"),
         sa.Column("output_tokens", sa.Integer, nullable=False, server_default="0"),
@@ -237,11 +254,15 @@ def upgrade() -> None:
         "deployments",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("application_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("applications.id"), nullable=False),
-        sa.Column("prompt_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=False),
+        sa.Column(
+            "prompt_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=False
+        ),
         sa.Column("status", sa.String(20), nullable=False, server_default="pending_eval"),
         sa.Column("canary_pct", sa.Integer, nullable=False, server_default="0"),
         sa.Column("eval_run_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("eval_runs.id"), nullable=True),
-        sa.Column("previous_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=True),
+        sa.Column(
+            "previous_version_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("prompt_versions.id"), nullable=True
+        ),
         sa.Column("deployed_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),

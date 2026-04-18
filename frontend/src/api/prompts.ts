@@ -23,5 +23,5 @@ export const promptsApi = {
   diffDetailed: (templateId: string, v1: number, v2: number) =>
     apiClient.get<PromptDiffDetailed>(`/prompts/${templateId}/diff/detailed`, { params: { v1, v2 } }).then(r => r.data),
   render: (templateId: string, variables: Record<string, string>, versionNumber?: number) =>
-    apiClient.post<{ rendered: string; version_number: number }>(`/prompts/${templateId}/render`, { variables, version_number: versionNumber }).then(r => r.data),
+    apiClient.post<{ rendered: string; version_number: number; output?: string; tokens?: number; cost?: number }>(`/prompts/${templateId}/render`, { variables, version_number: versionNumber }).then(r => r.data),
 }

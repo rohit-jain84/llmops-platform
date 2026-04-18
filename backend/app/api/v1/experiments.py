@@ -45,9 +45,7 @@ async def get_experiment(
     user: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(Experiment)
-        .options(selectinload(Experiment.variants))
-        .where(Experiment.id == experiment_id)
+        select(Experiment).options(selectinload(Experiment.variants)).where(Experiment.id == experiment_id)
     )
     exp = result.scalar_one_or_none()
     if not exp:

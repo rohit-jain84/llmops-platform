@@ -9,7 +9,7 @@ import PromptEditor from '@/components/editor/prompt-editor'
 import LoadingSkeleton from '@/components/common/loading-skeleton'
 import { usePrompt, usePromptVersions, useCreatePromptVersion, useTagVersion } from '@/hooks/use-prompts'
 import { formatDate } from '@/lib/utils'
-import { Save, Tag, History, Play } from 'lucide-react'
+import { Save, Tag, Play } from 'lucide-react'
 
 export default function PromptDetail() {
   const { id } = useParams<{ id: string }>()

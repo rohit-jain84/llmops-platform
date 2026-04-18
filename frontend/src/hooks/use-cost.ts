@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { costApi } from '@/api/cost'
 
-export function useCostAnalytics(params?: { application_id?: string; date_from?: string; date_to?: string; group_by?: string }) {
+export function useCostAnalytics(params?: { application_id?: string; date_from?: string; date_to?: string; group_by?: string; timeRange?: string }) {
   return useQuery({
     queryKey: ['cost', 'analytics', params],
     queryFn: () => costApi.getAnalytics(params),
@@ -9,11 +9,10 @@ export function useCostAnalytics(params?: { application_id?: string; date_from?:
   })
 }
 
-export function useCostForecast(appId: string) {
+export function useCostForecast(appId?: string) {
   return useQuery({
-    queryKey: ['cost', 'forecast', appId],
-    queryFn: () => costApi.getForecast(appId),
-    enabled: !!appId,
+    queryKey: ['cost', 'forecast', appId ?? 'all'],
+    queryFn: () => costApi.getForecast(appId ?? ''),
   })
 }
 

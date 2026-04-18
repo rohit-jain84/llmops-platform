@@ -7,7 +7,6 @@ and cache storage.
 """
 
 import uuid
-from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -22,10 +21,10 @@ from app.models.experiment import Experiment, ExperimentVariant
 from app.models.prompt import PromptTemplate, PromptVersion
 from app.services.gateway_service import GatewayService
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_request(
     app_id: uuid.UUID,
@@ -58,6 +57,7 @@ def _fake_llm_response(text: str = "Hello from LLM", model: str = "gpt-4o-mini")
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest_asyncio.fixture
 async def app_obj(db_session: AsyncSession, test_user) -> Application:
@@ -93,16 +93,17 @@ async def prompt_template(db_session: AsyncSession, app_obj: Application) -> Pro
 async def prompt_version(db_session: AsyncSession, prompt_template: PromptTemplate) -> PromptVersion:
     """Return the production PromptVersion for the fixture template."""
     from sqlalchemy import select
+
     from app.models.prompt import PromptVersion as PV
-    result = await db_session.execute(
-        select(PV).where(PV.template_id == prompt_template.id, PV.tag == "production")
-    )
+
+    result = await db_session.execute(select(PV).where(PV.template_id == prompt_template.id, PV.tag == "production"))
     return result.scalar_one()
 
 
 # ---------------------------------------------------------------------------
 # Shared mock context manager
 # ---------------------------------------------------------------------------
+
 
 def _gateway_mocks(
     llm_response=None,
@@ -125,10 +126,13 @@ def _gateway_mocks(
             self.langfuse_flush = None
 
         async def __aenter__(self):
-            p1 = patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=llm_response)
+            p1 = patch(
+                "app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=llm_response
+            )
             p2 = patch("app.services.gateway_service.litellm.completion_cost", return_value=completion_cost)
             p3 = patch.object(
-                GatewayService, "_build_cache_svc",
+                GatewayService,
+                "_build_cache_svc",
                 create=True,  # attribute may not exist; we patch the instance later
             )
 
@@ -149,6 +153,7 @@ def _gateway_mocks(
 # Tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_happy_path_basic_chat(db_session, app_obj, prompt_template, prompt_version):
     """Happy path: no cache hit, no experiment, no routing rule.
@@ -158,7 +163,9 @@ async def test_happy_path_basic_chat(db_session, app_obj, prompt_template, promp
 
     fake_resp = _fake_llm_response("Hi World!")
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=fake_resp) as mock_llm,
+        patch(
+            "app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=fake_resp
+        ) as mock_llm,
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.0015),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock) as mock_store,
@@ -183,9 +190,8 @@ async def test_happy_path_basic_chat(db_session, app_obj, prompt_template, promp
 
     # Verify cost was persisted to the database
     from sqlalchemy import select
-    log_result = await db_session.execute(
-        select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id)
-    )
+
+    log_result = await db_session.execute(select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id))
     log = log_result.scalar_one()
     assert log.cache_hit is False
     assert log.model == "gpt-4o-mini"
@@ -220,9 +226,8 @@ async def test_cache_hit_skips_llm_call(db_session, app_obj, prompt_template, pr
 
     # A cost log row should still be written (with cache_hit=True)
     from sqlalchemy import select
-    log_result = await db_session.execute(
-        select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id)
-    )
+
+    log_result = await db_session.execute(select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id))
     log = log_result.scalar_one()
     assert log.cache_hit is True
     assert log.input_tokens == 0
@@ -235,7 +240,11 @@ async def test_cache_miss_stores_response(db_session, app_obj, prompt_template, 
     request = _make_request(app_obj.id, prompt_template.id, variables={"name": "Store"})
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("stored")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("stored"),
+        ),
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.001),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock) as mock_store,
@@ -292,13 +301,18 @@ async def test_experiment_variant_resolution(db_session, app_obj, prompt_templat
     await db_session.refresh(variant)
 
     request = _make_request(
-        app_obj.id, prompt_template.id,
+        app_obj.id,
+        prompt_template.id,
         variables={"name": "Experimenter"},
         user_id="test-user-123",
     )
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("variant response")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("variant response"),
+        ),
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.002),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -312,9 +326,8 @@ async def test_experiment_variant_resolution(db_session, app_obj, prompt_templat
 
     # Cost log should reference the variant
     from sqlalchemy import select
-    log_result = await db_session.execute(
-        select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id)
-    )
+
+    log_result = await db_session.execute(select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id))
     log = log_result.scalar_one()
     assert log.experiment_variant_id == variant.id
 
@@ -336,13 +349,16 @@ async def test_model_routing_keyword_rule(db_session, app_obj, prompt_template, 
 
     # The rendered prompt will contain "code" via the variable
     request = _make_request(
-        app_obj.id, prompt_template.id,
+        app_obj.id,
+        prompt_template.id,
         variables={"name": "code expert"},
     )
 
     routed_response = _fake_llm_response("routed response", model="gpt-4o")
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=routed_response) as mock_llm,
+        patch(
+            "app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=routed_response
+        ) as mock_llm,
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.005),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -357,9 +373,8 @@ async def test_model_routing_keyword_rule(db_session, app_obj, prompt_template, 
 
     # Cost log should record routed_model
     from sqlalchemy import select
-    log_result = await db_session.execute(
-        select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id)
-    )
+
+    log_result = await db_session.execute(select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id))
     log = log_result.scalar_one()
     assert log.routed_model == "gpt-4o"
 
@@ -383,9 +398,8 @@ async def test_cost_logging_after_request(db_session, app_obj, prompt_template, 
         result = await svc.handle_chat(request)
 
     from sqlalchemy import select
-    log_result = await db_session.execute(
-        select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id)
-    )
+
+    log_result = await db_session.execute(select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id))
     log = log_result.scalar_one()
 
     assert log.input_tokens == 10
@@ -404,7 +418,11 @@ async def test_llm_call_failure_propagates(db_session, app_obj, prompt_template,
     request = _make_request(app_obj.id, prompt_template.id, variables={"name": "Error"})
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, side_effect=RuntimeError("LLM is down")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("LLM is down"),
+        ),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.langfuse_service.LangFuseService.create_trace", return_value=None),
     ):
@@ -414,9 +432,8 @@ async def test_llm_call_failure_propagates(db_session, app_obj, prompt_template,
 
     # No cost log should be written since the LLM call failed before that step
     from sqlalchemy import select
-    log_result = await db_session.execute(
-        select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id)
-    )
+
+    log_result = await db_session.execute(select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id))
     assert log_result.scalar_one_or_none() is None
 
 
@@ -447,14 +464,19 @@ async def test_temperature_and_max_tokens_forwarded(db_session, app_obj, prompt_
     """Optional temperature and max_tokens should be forwarded to litellm."""
 
     request = _make_request(
-        app_obj.id, prompt_template.id,
+        app_obj.id,
+        prompt_template.id,
         variables={"name": "Params"},
         temperature=0.7,
         max_tokens=256,
     )
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("ok")) as mock_llm,
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("ok"),
+        ) as mock_llm,
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.001),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -477,7 +499,11 @@ async def test_langfuse_tracing_called(db_session, app_obj, prompt_template, pro
     fake_trace.id = "trace-abc-123"
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("traced")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("traced"),
+        ),
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.001),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -494,9 +520,8 @@ async def test_langfuse_tracing_called(db_session, app_obj, prompt_template, pro
 
     # The cost log should record the trace_id too
     from sqlalchemy import select
-    log_result = await db_session.execute(
-        select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id)
-    )
+
+    log_result = await db_session.execute(select(LLMRequestLog).where(LLMRequestLog.application_id == app_obj.id))
     log = log_result.scalar_one()
     assert log.trace_id == "trace-abc-123"
 
@@ -520,7 +545,11 @@ async def test_fallback_to_latest_version_when_no_production_tag(db_session, app
     request = _make_request(app_obj.id, tmpl.id, variables={"name": "Fallback"})
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("ok")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("ok"),
+        ),
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.001),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -537,6 +566,7 @@ async def test_fallback_to_latest_version_when_no_production_tag(db_session, app
 # ---------------------------------------------------------------------------
 # Routing service edge cases
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_routing_complexity_condition(db_session, app_obj, prompt_template, prompt_version):
@@ -555,12 +585,17 @@ async def test_routing_complexity_condition(db_session, app_obj, prompt_template
 
     # Input with >5 words triggers complexity rule (the rendered prompt contains the variable)
     request = _make_request(
-        app_obj.id, prompt_template.id,
+        app_obj.id,
+        prompt_template.id,
         variables={"name": "a very long input with many many words here"},
     )
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("complex", model="gpt-4o")) as mock_llm,
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("complex", model="gpt-4o"),
+        ) as mock_llm,
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.01),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -588,12 +623,17 @@ async def test_routing_complexity_below_threshold(db_session, app_obj, prompt_te
     await db_session.flush()
 
     request = _make_request(
-        app_obj.id, prompt_template.id,
+        app_obj.id,
+        prompt_template.id,
         variables={"name": "short"},
     )
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("simple")) as mock_llm,
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("simple"),
+        ) as mock_llm,
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.001),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -622,12 +662,17 @@ async def test_routing_length_condition(db_session, app_obj, prompt_template, pr
     await db_session.flush()
 
     request = _make_request(
-        app_obj.id, prompt_template.id,
+        app_obj.id,
+        prompt_template.id,
         variables={"name": "This is a fairly long name input"},
     )
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("long", model="gpt-4o")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("long", model="gpt-4o"),
+        ),
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.005),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -663,12 +708,17 @@ async def test_routing_priority_ordering(db_session, app_obj, prompt_template, p
     await db_session.flush()
 
     request = _make_request(
-        app_obj.id, prompt_template.id,
+        app_obj.id,
+        prompt_template.id,
         variables={"name": "hello world"},
     )
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("priority", model="gpt-4o")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("priority", model="gpt-4o"),
+        ),
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.005),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -697,12 +747,17 @@ async def test_routing_inactive_rule_ignored(db_session, app_obj, prompt_templat
     await db_session.flush()
 
     request = _make_request(
-        app_obj.id, prompt_template.id,
+        app_obj.id,
+        prompt_template.id,
         variables={"name": "hello world"},
     )
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("default")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("default"),
+        ),
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.001),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -733,7 +788,11 @@ async def test_routing_unknown_condition_type_falls_through(db_session, app_obj,
     request = _make_request(app_obj.id, prompt_template.id, variables={"name": "test"})
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("default")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("default"),
+        ),
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.001),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
@@ -749,6 +808,7 @@ async def test_routing_unknown_condition_type_falls_through(db_session, app_obj,
 # Cache service edge cases
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_cache_lookup_failure_treated_as_miss(db_session, app_obj, prompt_template, prompt_version):
     """If the cache service raises an exception during lookup, it should be
@@ -757,9 +817,17 @@ async def test_cache_lookup_failure_treated_as_miss(db_session, app_obj, prompt_
     request = _make_request(app_obj.id, prompt_template.id, variables={"name": "CacheFail"})
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("ok")) as mock_llm,
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("ok"),
+        ) as mock_llm,
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.001),
-        patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, side_effect=ConnectionError("Qdrant down")),
+        patch(
+            "app.services.cache_service.CacheService.lookup",
+            new_callable=AsyncMock,
+            side_effect=ConnectionError("Qdrant down"),
+        ),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),
         patch("app.services.langfuse_service.LangFuseService.create_trace", return_value=None),
     ):
@@ -780,10 +848,18 @@ async def test_cache_store_failure_does_not_break_response(db_session, app_obj, 
     request = _make_request(app_obj.id, prompt_template.id, variables={"name": "StoreFail"})
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("result")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("result"),
+        ),
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.001),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
-        patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock, side_effect=ConnectionError("Qdrant write failed")),
+        patch(
+            "app.services.cache_service.CacheService.store",
+            new_callable=AsyncMock,
+            side_effect=ConnectionError("Qdrant write failed"),
+        ),
         patch("app.services.langfuse_service.LangFuseService.create_trace", return_value=None),
     ):
         svc = GatewayService(db_session)
@@ -859,7 +935,9 @@ async def test_error_metrics_recorded_on_llm_failure(db_session, app_obj, prompt
     }
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, side_effect=RuntimeError("boom")),
+        patch(
+            "app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, side_effect=RuntimeError("boom")
+        ),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.langfuse_service.LangFuseService.create_trace", return_value=None),
         patch("app.services.gateway_service.get_metrics", return_value=mock_metrics),
@@ -876,13 +954,18 @@ async def test_custom_model_override(db_session, app_obj, prompt_template, promp
     """When the request specifies a custom model, it should be used as the default."""
 
     request = _make_request(
-        app_obj.id, prompt_template.id,
+        app_obj.id,
+        prompt_template.id,
         variables={"name": "Custom"},
         model="claude-3-5-sonnet-20241022",
     )
 
     with (
-        patch("app.services.gateway_service.litellm.acompletion", new_callable=AsyncMock, return_value=_fake_llm_response("custom", model="claude-3-5-sonnet-20241022")) as mock_llm,
+        patch(
+            "app.services.gateway_service.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=_fake_llm_response("custom", model="claude-3-5-sonnet-20241022"),
+        ) as mock_llm,
         patch("app.services.gateway_service.litellm.completion_cost", return_value=0.003),
         patch("app.services.cache_service.CacheService.lookup", new_callable=AsyncMock, return_value=None),
         patch("app.services.cache_service.CacheService.store", new_callable=AsyncMock),

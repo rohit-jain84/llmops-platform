@@ -1,7 +1,6 @@
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
 
 from app.config import settings
 from app.telemetry.metrics import get_metrics
@@ -17,12 +16,14 @@ class CacheService:
     def _get_qdrant_client(self):
         if self._qdrant_client is None:
             from qdrant_client import QdrantClient
+
             self._qdrant_client = QdrantClient(url=settings.qdrant_url)
         return self._qdrant_client
 
     def _get_embedding_model(self):
         if self._embedding_model is None:
             from sentence_transformers import SentenceTransformer
+
             self._embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
         return self._embedding_model
 
@@ -36,6 +37,7 @@ class CacheService:
             client.get_collection(collection_name)
         except Exception:
             from qdrant_client.models import Distance, VectorParams
+
             client.create_collection(
                 collection_name=collection_name,
                 vectors_config=VectorParams(size=384, distance=Distance.COSINE),
@@ -91,6 +93,7 @@ class CacheService:
             embedding = self._embed(query)
 
             from qdrant_client.models import PointStruct
+
             point = PointStruct(
                 id=str(uuid.uuid4()),
                 vector=embedding,

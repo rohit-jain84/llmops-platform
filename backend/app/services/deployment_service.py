@@ -16,18 +16,15 @@ class DeploymentService:
 
     async def create_deployment(self, data: DeploymentCreate, user_id: uuid.UUID) -> Deployment:
         # Get prompt version to find application_id
-        result = await self.db.execute(
-            select(PromptVersion).where(PromptVersion.id == data.prompt_version_id)
-        )
+        result = await self.db.execute(select(PromptVersion).where(PromptVersion.id == data.prompt_version_id))
         version = result.scalar_one_or_none()
         if not version:
             raise HTTPException(status_code=404, detail="Prompt version not found")
 
         # Get template for application_id
         from app.models.prompt import PromptTemplate
-        template_result = await self.db.execute(
-            select(PromptTemplate).where(PromptTemplate.id == version.template_id)
-        )
+
+        template_result = await self.db.execute(select(PromptTemplate).where(PromptTemplate.id == version.template_id))
         template = template_result.scalar_one()
 
         # Get current production version
@@ -53,9 +50,7 @@ class DeploymentService:
         return deployment
 
     async def promote(self, deployment_id: uuid.UUID) -> Deployment:
-        result = await self.db.execute(
-            select(Deployment).where(Deployment.id == deployment_id)
-        )
+        result = await self.db.execute(select(Deployment).where(Deployment.id == deployment_id))
         deployment = result.scalar_one_or_none()
         if not deployment:
             raise HTTPException(status_code=404, detail="Deployment not found")
@@ -99,9 +94,7 @@ class DeploymentService:
         return deployment
 
     async def rollback(self, deployment_id: uuid.UUID) -> Deployment:
-        result = await self.db.execute(
-            select(Deployment).where(Deployment.id == deployment_id)
-        )
+        result = await self.db.execute(select(Deployment).where(Deployment.id == deployment_id))
         deployment = result.scalar_one_or_none()
         if not deployment:
             raise HTTPException(status_code=404, detail="Deployment not found")

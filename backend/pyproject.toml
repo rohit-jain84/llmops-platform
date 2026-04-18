@@ -71,6 +71,14 @@ line-length = 120
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
 
+[tool.ruff.lint.per-file-ignores]
+"app/evaluators/__init__.py" = ["F401"]
+"app/evaluators/factuality.py" = ["E501"]
+"app/services/prompt_service.py" = ["E741"]
+"app/services/routing_service.py" = ["E712"]
+"app/workers/cost_tasks.py" = ["E712"]
+"tests/**/*.py" = ["F841", "N817", "E501"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

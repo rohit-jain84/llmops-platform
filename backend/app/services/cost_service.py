@@ -106,8 +106,7 @@ class CostService:
             select(
                 func.sum(LLMRequestLog.cost_usd).label("total"),
                 func.count().label("days"),
-            )
-            .where(
+            ).where(
                 LLMRequestLog.application_id == app_id,
                 LLMRequestLog.created_at >= seven_days_ago,
             )
@@ -121,8 +120,7 @@ class CostService:
         current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         current_result = await self.db.execute(
-            select(func.sum(LLMRequestLog.cost_usd))
-            .where(
+            select(func.sum(LLMRequestLog.cost_usd)).where(
                 LLMRequestLog.application_id == app_id,
                 LLMRequestLog.created_at >= current_month_start,
             )
@@ -134,10 +132,12 @@ class CostService:
         daily_projections = []
         for i in range(30):
             day = now + timedelta(days=i)
-            daily_projections.append({
-                "date": day.strftime("%Y-%m-%d"),
-                "projected_cost": round(daily_avg, 4),
-            })
+            daily_projections.append(
+                {
+                    "date": day.strftime("%Y-%m-%d"),
+                    "projected_cost": round(daily_avg, 4),
+                }
+            )
 
         return CostForecastResponse(
             application_id=app_id,

@@ -70,6 +70,7 @@ class PromptDiffResponse(BaseModel):
 
 class PromptDiffDetailedResponse(PromptDiffResponse):
     """Extended diff response with version metadata and change stats."""
+
     v1_tag: str | None = None
     v2_tag: str | None = None
     v1_commit_message: str | None = None

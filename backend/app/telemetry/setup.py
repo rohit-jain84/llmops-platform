@@ -28,7 +28,9 @@ def setup_telemetry(app):
         # Instrument SQLAlchemy
         try:
             from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+
             from app.database import engine
+
             SQLAlchemyInstrumentor().instrument(engine=engine.sync_engine)
         except Exception:
             pass
@@ -36,6 +38,7 @@ def setup_telemetry(app):
         # Instrument Redis
         try:
             from opentelemetry.instrumentation.redis import RedisInstrumentor
+
             RedisInstrumentor().instrument()
         except Exception:
             pass
@@ -43,6 +46,7 @@ def setup_telemetry(app):
         # Instrument httpx
         try:
             from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
             HTTPXClientInstrumentor().instrument()
         except Exception:
             pass

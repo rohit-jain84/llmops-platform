@@ -17,13 +17,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.application import Application
 from app.models.cost import LLMRequestLog
-from app.models.enums import EvalRunStatus, ExperimentStatus
-from app.models.evaluation import EvalDataset, EvalDatasetItem, EvalResult, EvalRun
-from app.models.experiment import Experiment, ExperimentResult, ExperimentVariant
+from app.models.enums import EvalRunStatus
+from app.models.evaluation import EvalRun
 from app.models.prompt import PromptTemplate, PromptVersion
 
-
 # ---- Helpers ----
+
 
 async def create_app_with_prompt(
     db: AsyncSession, user_id: uuid.UUID, app_name: str = "Integration App"
@@ -47,6 +46,7 @@ async def create_app_with_prompt(
 
 
 # ---- Test: Full Prompt Lifecycle ----
+
 
 @pytest.mark.asyncio
 async def test_prompt_lifecycle_with_diff_and_regression(
@@ -225,22 +225,27 @@ async def test_prompt_lifecycle_with_diff_and_regression(
 
 # ---- Test: Experiment Lifecycle ----
 
+
 @pytest.mark.asyncio
-async def test_experiment_lifecycle(
-    client: AsyncClient, db_session: AsyncSession, test_user, auth_headers
-):
+async def test_experiment_lifecycle(client: AsyncClient, db_session: AsyncSession, test_user, auth_headers):
     """Create experiment → start → stop → verify results."""
     app, template = await create_app_with_prompt(db_session, test_user.id, "Experiment App")
 
     # Create two prompt versions
     v1 = PromptVersion(
-        id=uuid.uuid4(), template_id=template.id, version_number=1,
-        content="V1: Answer {{question}}", variables={"question": ""},
+        id=uuid.uuid4(),
+        template_id=template.id,
+        version_number=1,
+        content="V1: Answer {{question}}",
+        variables={"question": ""},
         created_by=test_user.id,
     )
     v2 = PromptVersion(
-        id=uuid.uuid4(), template_id=template.id, version_number=2,
-        content="V2: Please answer {{question}} thoughtfully", variables={"question": ""},
+        id=uuid.uuid4(),
+        template_id=template.id,
+        version_number=2,
+        content="V2: Please answer {{question}} thoughtfully",
+        variables={"question": ""},
         created_by=test_user.id,
     )
     db_session.add(v1)
@@ -302,10 +307,9 @@ async def test_experiment_lifecycle(
 
 # ---- Test: Cost Tracking Flow ----
 
+
 @pytest.mark.asyncio
-async def test_cost_tracking_flow(
-    client: AsyncClient, db_session: AsyncSession, test_user, auth_headers
-):
+async def test_cost_tracking_flow(client: AsyncClient, db_session: AsyncSession, test_user, auth_headers):
     """Create request logs → query analytics → create budget alert."""
     app, template = await create_app_with_prompt(db_session, test_user.id, "Cost App")
 
@@ -367,10 +371,9 @@ async def test_cost_tracking_flow(
 
 # ---- Test: Eval Dataset and Run Flow ----
 
+
 @pytest.mark.asyncio
-async def test_eval_dataset_and_run_flow(
-    client: AsyncClient, db_session: AsyncSession, test_user, auth_headers
-):
+async def test_eval_dataset_and_run_flow(client: AsyncClient, db_session: AsyncSession, test_user, auth_headers):
     """Create dataset → add items → verify counts → list datasets."""
     app, template = await create_app_with_prompt(db_session, test_user.id, "Eval App")
 
@@ -420,16 +423,19 @@ async def test_eval_dataset_and_run_flow(
 
 # ---- Test: Deployment Flow ----
 
+
 @pytest.mark.asyncio
-async def test_deployment_create_and_list(
-    client: AsyncClient, db_session: AsyncSession, test_user, auth_headers
-):
+async def test_deployment_create_and_list(client: AsyncClient, db_session: AsyncSession, test_user, auth_headers):
     """Create deployment → list → verify status."""
     app, template = await create_app_with_prompt(db_session, test_user.id, "Deploy App")
 
     v1 = PromptVersion(
-        id=uuid.uuid4(), template_id=template.id, version_number=1,
-        content="Deploy test", variables={}, created_by=test_user.id,
+        id=uuid.uuid4(),
+        template_id=template.id,
+        version_number=1,
+        content="Deploy test",
+        variables={},
+        created_by=test_user.id,
     )
     db_session.add(v1)
     await db_session.commit()
@@ -464,6 +470,7 @@ async def test_deployment_create_and_list(
 
 # ---- Test: Regression Check Without Eval Runs ----
 
+
 @pytest.mark.asyncio
 async def test_regression_check_requires_eval_runs(
     client: AsyncClient, db_session: AsyncSession, test_user, auth_headers
@@ -472,8 +479,12 @@ async def test_regression_check_requires_eval_runs(
     app, template = await create_app_with_prompt(db_session, test_user.id, "NoEval App")
 
     v1 = PromptVersion(
-        id=uuid.uuid4(), template_id=template.id, version_number=1,
-        content="No eval", variables={}, created_by=test_user.id,
+        id=uuid.uuid4(),
+        template_id=template.id,
+        version_number=1,
+        content="No eval",
+        variables={},
+        created_by=test_user.id,
     )
     db_session.add(v1)
     await db_session.commit()
@@ -487,10 +498,9 @@ async def test_regression_check_requires_eval_runs(
 
 # ---- Test: Application CRUD ----
 
+
 @pytest.mark.asyncio
-async def test_application_crud(
-    client: AsyncClient, db_session: AsyncSession, test_user, auth_headers
-):
+async def test_application_crud(client: AsyncClient, db_session: AsyncSession, test_user, auth_headers):
     """Create → list → get application."""
     resp = await client.post(
         "/api/v1/applications",

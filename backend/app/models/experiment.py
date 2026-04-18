@@ -12,17 +12,13 @@ from app.models.enums import ExperimentStatus
 class Experiment(UUIDMixin, Base):
     __tablename__ = "experiments"
 
-    application_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("applications.id"), nullable=False
-    )
+    application_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("applications.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=ExperimentStatus.DRAFT)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     application = relationship("Application", back_populates="experiments")
     variants = relationship("ExperimentVariant", back_populates="experiment", cascade="all, delete-orphan")
@@ -32,9 +28,7 @@ class Experiment(UUIDMixin, Base):
 class ExperimentVariant(UUIDMixin, Base):
     __tablename__ = "experiment_variants"
 
-    experiment_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("experiments.id"), nullable=False
-    )
+    experiment_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("experiments.id"), nullable=False)
     prompt_version_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("prompt_versions.id"), nullable=False
     )
@@ -48,9 +42,7 @@ class ExperimentVariant(UUIDMixin, Base):
 class ExperimentResult(UUIDMixin, Base):
     __tablename__ = "experiment_results"
 
-    experiment_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("experiments.id"), nullable=False
-    )
+    experiment_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("experiments.id"), nullable=False)
     variant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("experiment_variants.id"), nullable=False
     )

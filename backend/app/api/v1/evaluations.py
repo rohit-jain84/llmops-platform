@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -15,8 +15,8 @@ from app.models.evaluation import (
     HumanEvalAssignment,
     HumanEvalCampaign,
 )
-from app.models.user import User
 from app.models.prompt import PromptVersion
+from app.models.user import User
 from app.schemas.evaluation import (
     EvalDatasetCreate,
     EvalDatasetItemBulkCreate,
@@ -50,15 +50,10 @@ async def list_datasets(
     datasets = result.scalars().all()
     response = []
     for ds in datasets:
-        count_result = await db.execute(
-            select(func.count()).where(EvalDatasetItem.dataset_id == ds.id)
-        )
+        count_result = await db.execute(select(func.count()).where(EvalDatasetItem.dataset_id == ds.id))
         item_count = count_result.scalar() or 0
         runs_result = await db.execute(
-            select(EvalRun)
-            .where(EvalRun.dataset_id == ds.id)
-            .order_by(EvalRun.created_at.desc())
-            .limit(5)
+            select(EvalRun).where(EvalRun.dataset_id == ds.id).order_by(EvalRun.created_at.desc()).limit(5)
         )
         runs = runs_result.scalars().all()
         recent_runs = []
@@ -68,12 +63,14 @@ async def list_datasets(
                 scores = [v for v in r.aggregate_scores.values() if isinstance(v, (int, float))]
                 if scores:
                     overall = sum(scores) / len(scores) / 5.0
-            recent_runs.append({
-                "id": r.id,
-                "status": r.status,
-                "overall_score": overall,
-                "created_at": r.created_at,
-            })
+            recent_runs.append(
+                {
+                    "id": r.id,
+                    "status": r.status,
+                    "overall_score": overall,
+                    "created_at": r.created_at,
+                }
+            )
         resp = EvalDatasetResponse.model_validate(ds)
         resp.item_count = item_count
         resp.recent_runs = recent_runs
@@ -99,7 +96,9 @@ async def create_dataset(
     return EvalDatasetResponse.model_validate(dataset)
 
 
-@router.post("/datasets/{dataset_id}/items", response_model=list[EvalDatasetItemResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/datasets/{dataset_id}/items", response_model=list[EvalDatasetItemResponse], status_code=status.HTTP_201_CREATED
+)
 async def add_items(
     dataset_id: uuid.UUID,
     data: EvalDatasetItemBulkCreate,
@@ -175,16 +174,12 @@ async def get_campaign(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    result = await db.execute(
-        select(HumanEvalCampaign).where(HumanEvalCampaign.id == campaign_id)
-    )
+    result = await db.execute(select(HumanEvalCampaign).where(HumanEvalCampaign.id == campaign_id))
     campaign = result.scalar_one_or_none()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    total = await db.execute(
-        select(func.count()).where(HumanEvalAssignment.campaign_id == campaign_id)
-    )
+    total = await db.execute(select(func.count()).where(HumanEvalAssignment.campaign_id == campaign_id))
     completed = await db.execute(
         select(func.count()).where(
             HumanEvalAssignment.campaign_id == campaign_id,

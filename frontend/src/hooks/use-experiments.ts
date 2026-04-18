@@ -58,9 +58,10 @@ export function useStopExperiment() {
 export function usePromoteWinner() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => experimentsApi.promoteWinner(id),
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ['experiments', id] })
+    mutationFn: ({ experimentId, variantId }: { experimentId: string; variantId?: string }) =>
+      experimentsApi.promoteWinner(experimentId, variantId),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['experiments', vars.experimentId] })
     },
   })
 }

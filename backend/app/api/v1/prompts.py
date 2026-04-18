@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -33,14 +33,14 @@ async def list_prompts(
     user: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(PromptTemplate)
-        .where(PromptTemplate.application_id == app_id)
-        .order_by(PromptTemplate.created_at.desc())
+        select(PromptTemplate).where(PromptTemplate.application_id == app_id).order_by(PromptTemplate.created_at.desc())
     )
     return result.scalars().all()
 
 
-@router.post("/applications/{app_id}/prompts", response_model=PromptTemplateResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/applications/{app_id}/prompts", response_model=PromptTemplateResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_prompt(
     app_id: uuid.UUID,
     data: PromptTemplateCreate,
@@ -61,9 +61,7 @@ async def get_prompt(
     user: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(PromptTemplate)
-        .options(selectinload(PromptTemplate.versions))
-        .where(PromptTemplate.id == template_id)
+        select(PromptTemplate).options(selectinload(PromptTemplate.versions)).where(PromptTemplate.id == template_id)
     )
     template = result.scalar_one_or_none()
     if not template:
@@ -85,7 +83,9 @@ async def list_versions(
     return result.scalars().all()
 
 
-@router.post("/prompts/{template_id}/versions", response_model=PromptVersionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/prompts/{template_id}/versions", response_model=PromptVersionResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_version(
     template_id: uuid.UUID,
     data: PromptVersionCreate,
@@ -104,8 +104,7 @@ async def get_version(
     user: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(PromptVersion)
-        .where(PromptVersion.template_id == template_id, PromptVersion.version_number == num)
+        select(PromptVersion).where(PromptVersion.template_id == template_id, PromptVersion.version_number == num)
     )
     version = result.scalar_one_or_none()
     if not version:

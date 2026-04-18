@@ -49,8 +49,8 @@ export function useTagVersion() {
 
 export function useRenderPrompt() {
   return useMutation({
-    mutationFn: ({ templateId, variables, versionNumber }: { templateId: string; variables: Record<string, string>; versionNumber?: number }) =>
-      promptsApi.render(templateId, variables, versionNumber),
+    mutationFn: ({ templateId, variables, versionNumber, versionNum }: { templateId: string; variables: Record<string, string>; versionNumber?: number; versionNum?: number; model?: string; temperature?: number }) =>
+      promptsApi.render(templateId, variables, versionNumber ?? versionNum),
   })
 }
 

@@ -4,11 +4,16 @@ import uuid
 
 import jinja2
 from fastapi import HTTPException
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.prompt import PromptTemplate, PromptVersion
-from app.schemas.prompt import PromptDiffDetailedResponse, PromptDiffResponse, PromptRenderResponse, PromptVersionCreate, PromptVersionResponse
+from app.models.prompt import PromptVersion
+from app.schemas.prompt import (
+    PromptDiffDetailedResponse,
+    PromptDiffResponse,
+    PromptRenderResponse,
+    PromptVersionCreate,
+)
 
 
 class PromptService:
@@ -20,8 +25,9 @@ class PromptService:
     ) -> PromptVersion:
         # Get next version number
         result = await self.db.execute(
-            select(func.coalesce(func.max(PromptVersion.version_number), 0))
-            .where(PromptVersion.template_id == template_id)
+            select(func.coalesce(func.max(PromptVersion.version_number), 0)).where(
+                PromptVersion.template_id == template_id
+            )
         )
         next_version = result.scalar() + 1
 
@@ -94,9 +100,7 @@ class PromptService:
             user_id,
         )
 
-    async def diff_versions(
-        self, template_id: uuid.UUID, v1: int, v2: int
-    ) -> PromptDiffResponse:
+    async def diff_versions(self, template_id: uuid.UUID, v1: int, v2: int) -> PromptDiffResponse:
         result1 = await self.db.execute(
             select(PromptVersion).where(
                 PromptVersion.template_id == template_id,
@@ -114,13 +118,9 @@ class PromptService:
         if not ver1 or not ver2:
             raise HTTPException(status_code=404, detail="One or both versions not found")
 
-        return PromptDiffResponse(
-            v1=v1, v2=v2, v1_content=ver1.content, v2_content=ver2.content
-        )
+        return PromptDiffResponse(v1=v1, v2=v2, v1_content=ver1.content, v2_content=ver2.content)
 
-    async def diff_versions_detailed(
-        self, template_id: uuid.UUID, v1: int, v2: int
-    ) -> PromptDiffDetailedResponse:
+    async def diff_versions_detailed(self, template_id: uuid.UUID, v1: int, v2: int) -> PromptDiffDetailedResponse:
         result1 = await self.db.execute(
             select(PromptVersion).where(
                 PromptVersion.template_id == template_id,

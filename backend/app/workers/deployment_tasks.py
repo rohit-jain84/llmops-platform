@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from datetime import datetime, timezone
 
 from sqlalchemy import select
 
@@ -30,9 +29,7 @@ def progress_canary():
 
 async def _progress_canary_async():
     async with async_session_factory() as db:
-        result = await db.execute(
-            select(Deployment).where(Deployment.status == DeploymentStatus.CANARY)
-        )
+        result = await db.execute(select(Deployment).where(Deployment.status == DeploymentStatus.CANARY))
         deployments = result.scalars().all()
 
         for deployment in deployments:
@@ -74,15 +71,15 @@ async def _progress_canary_async():
                 if current_idx < len(stages) - 1:
                     new_pct = stages[current_idx + 1]
                     deployment.canary_pct = new_pct
-                    logger.info(
-                        f"Deployment {deployment.id}: canary progressed to {new_pct}%"
-                    )
+                    logger.info(f"Deployment {deployment.id}: canary progressed to {new_pct}%")
 
                     if new_pct == 100:
                         deployment.status = DeploymentStatus.ROLLED_OUT
                         # Tag prompt version as production
-                        from app.models.prompt import PromptVersion
                         from sqlalchemy import select as sel
+
+                        from app.models.prompt import PromptVersion
+
                         version_result = await db.execute(
                             sel(PromptVersion).where(PromptVersion.id == deployment.prompt_version_id)
                         )
@@ -110,6 +107,7 @@ async def _progress_canary_async():
                 # Restore previous version
                 if deployment.previous_version_id:
                     from app.models.prompt import PromptVersion
+
                     prev = await db.execute(
                         select(PromptVersion).where(PromptVersion.id == deployment.previous_version_id)
                     )

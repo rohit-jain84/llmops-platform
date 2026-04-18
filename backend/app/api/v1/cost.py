@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +11,6 @@ from app.models.user import User
 from app.schemas.cost import (
     BudgetAlertCreate,
     BudgetAlertResponse,
-    CostAnalyticsQuery,
     CostAnalyticsResponse,
     CostForecastResponse,
 )

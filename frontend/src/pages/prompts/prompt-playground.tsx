@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom'
 import PageHeader from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import PromptEditor from '@/components/editor/prompt-editor'
 import MetricCard from '@/components/charts/metric-card'
 import LoadingSkeleton from '@/components/common/loading-skeleton'
@@ -30,12 +29,12 @@ export default function PromptPlayground() {
     const start = Date.now()
     const result = await renderPrompt.mutateAsync({
       templateId: id,
-      versionNum: latestVersion.version_number,
+      versionNumber: latestVersion.version_number,
       variables,
       model,
       temperature,
     })
-    setOutput(result.output)
+    setOutput(result.output ?? result.rendered ?? null)
     setMetrics({ latency: Date.now() - start, tokens: result.tokens ?? 0, cost: result.cost ?? 0 })
   }
 

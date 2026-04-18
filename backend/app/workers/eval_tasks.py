@@ -13,7 +13,6 @@ from app.evaluators.registry import EVALUATORS
 from app.models.enums import EvalRunStatus
 from app.models.evaluation import EvalDatasetItem, EvalResult, EvalRun
 from app.models.prompt import PromptVersion
-from app.services.prompt_service import PromptService
 from app.telemetry.metrics import get_metrics
 from app.workers.celery_app import celery_app
 
@@ -39,9 +38,7 @@ def run_eval_suite(self, eval_run_id: str):
 async def _run_eval_suite_async(eval_run_id: str):
     async with async_session_factory() as db:
         # Get eval run
-        result = await db.execute(
-            select(EvalRun).where(EvalRun.id == uuid.UUID(eval_run_id))
-        )
+        result = await db.execute(select(EvalRun).where(EvalRun.id == uuid.UUID(eval_run_id)))
         run = result.scalar_one_or_none()
         if not run:
             logger.error(f"Eval run {eval_run_id} not found")
@@ -52,15 +49,11 @@ async def _run_eval_suite_async(eval_run_id: str):
 
         try:
             # Get prompt version
-            pv_result = await db.execute(
-                select(PromptVersion).where(PromptVersion.id == run.prompt_version_id)
-            )
+            pv_result = await db.execute(select(PromptVersion).where(PromptVersion.id == run.prompt_version_id))
             prompt_version = pv_result.scalar_one()
 
             # Get dataset items
-            items_result = await db.execute(
-                select(EvalDatasetItem).where(EvalDatasetItem.dataset_id == run.dataset_id)
-            )
+            items_result = await db.execute(select(EvalDatasetItem).where(EvalDatasetItem.dataset_id == run.dataset_id))
             items = items_result.scalars().all()
 
             model_config = prompt_version.model_config_json or {}
@@ -72,6 +65,7 @@ async def _run_eval_suite_async(eval_run_id: str):
             for item in items:
                 # Render prompt
                 import jinja2
+
                 env = jinja2.Environment(undefined=jinja2.StrictUndefined)
                 template = env.from_string(prompt_version.content)
                 rendered = template.render(**item.input_vars)
@@ -113,9 +107,7 @@ async def _run_eval_suite_async(eval_run_id: str):
                     except Exception as e:
                         logger.warning(f"Evaluator {name} failed: {e}")
                         scores[name] = 0.0
-                    metrics["eval_score"].record(
-                        scores[name], {"evaluator": name, "model": model}
-                    )
+                    metrics["eval_score"].record(scores[name], {"evaluator": name, "model": model})
 
                 # Add latency as a score
                 scores["latency"] = float(latency_ms)
@@ -147,6 +139,7 @@ async def _run_eval_suite_async(eval_run_id: str):
             run.aggregate_scores = aggregate
             run.status = EvalRunStatus.COMPLETED
             from datetime import datetime, timezone
+
             run.completed_at = datetime.now(timezone.utc)
             await db.commit()
 

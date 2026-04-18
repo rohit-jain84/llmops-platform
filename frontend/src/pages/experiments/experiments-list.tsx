@@ -14,7 +14,7 @@ interface ExperimentRow {
   id: string
   name: string
   status: string
-  app_id: string
+  app_id?: string
   variants_count?: number
   created_at: string
   [key: string]: unknown

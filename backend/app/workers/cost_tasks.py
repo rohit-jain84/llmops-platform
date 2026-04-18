@@ -1,8 +1,6 @@
 import asyncio
 import logging
-import uuid
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
 
 from sqlalchemy import func, select
 
@@ -28,9 +26,7 @@ def check_budgets():
 
 async def _check_budgets_async():
     async with async_session_factory() as db:
-        result = await db.execute(
-            select(BudgetAlert).where(BudgetAlert.is_active == True)
-        )
+        result = await db.execute(select(BudgetAlert).where(BudgetAlert.is_active == True))
         alerts = result.scalars().all()
 
         for alert in alerts:
@@ -45,8 +41,7 @@ async def _check_budgets_async():
                 period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
             cost_result = await db.execute(
-                select(func.sum(LLMRequestLog.cost_usd))
-                .where(
+                select(func.sum(LLMRequestLog.cost_usd)).where(
                     LLMRequestLog.application_id == alert.application_id,
                     LLMRequestLog.created_at >= period_start,
                 )

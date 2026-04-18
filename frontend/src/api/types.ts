@@ -34,6 +34,7 @@ export interface PromptVersion {
   commit_message: string | null
   created_by: string | null
   created_at: string
+  [key: string]: unknown
 }
 
 export interface Experiment {
@@ -46,6 +47,9 @@ export interface Experiment {
   created_by: string
   created_at: string
   variants: ExperimentVariant[]
+  app_id?: string
+  variants_count?: number
+  [key: string]: unknown
 }
 
 export interface ExperimentVariant {
@@ -53,6 +57,9 @@ export interface ExperimentVariant {
   prompt_version_id: string
   traffic_pct: number
   label: string
+  name?: string
+  conversion_rate?: number
+  avg_latency_ms?: number
 }
 
 export interface ExperimentResult {
@@ -65,6 +72,15 @@ export interface ExperimentResult {
   updated_at: string
 }
 
+export interface ExperimentResultSummary {
+  winner?: { id: string; name: string } | null
+  total_requests?: number
+  p_value?: number | null
+  variants?: Array<{ id?: string; name: string; conversion_rate?: number; avg_latency_ms?: number; [key: string]: unknown }>
+  convergence?: Array<Record<string, unknown>>
+  results?: ExperimentResult[]
+}
+
 export interface EvalDataset {
   id: string
   application_id: string
@@ -73,6 +89,7 @@ export interface EvalDataset {
   description: string | null
   created_at: string
   item_count: number
+  [key: string]: unknown
 }
 
 export interface EvalRun {
@@ -84,6 +101,7 @@ export interface EvalRun {
   aggregate_scores: Record<string, number> | null
   created_at: string
   completed_at: string | null
+  overall_score?: number | null
 }
 
 export interface EvalResult {
@@ -96,6 +114,12 @@ export interface EvalResult {
   token_usage: { input: number; output: number } | null
   cost_usd: number | null
   created_at: string
+  input?: string
+  expected?: string
+  actual?: string
+  score?: number
+  metrics?: Record<string, number>
+  [key: string]: unknown
 }
 
 export interface HumanEvalCampaign {
@@ -107,9 +131,14 @@ export interface HumanEvalCampaign {
   created_at: string
   total_assignments: number
   completed_assignments: number
-  items?: { id: string; [key: string]: unknown }[]
+  items?: Array<{ id: string; input?: string; output?: string; output_a?: string; output_b?: string; [key: string]: unknown }>
   total_items?: number
   completed_items?: number
+  description?: string
+  reviewers_count?: number
+  score_distribution?: Array<{ score: string | number; count: number }>
+  reviewers?: Array<{ email: string; completed: number; total: number }>
+  [key: string]: unknown
 }
 
 export interface CostAnalytics {
@@ -119,6 +148,13 @@ export interface CostAnalytics {
   total_output_tokens: number
   cache_hit_rate: number
   breakdown: Array<{ period: string; cost: number; requests: number }>
+  total_tokens?: number
+  input_tokens?: number
+  output_tokens?: number
+  token_usage_over_time?: Array<Record<string, unknown>>
+  tokens_by_model?: Array<Record<string, unknown>>
+  tokens_by_app?: Array<Record<string, unknown>>
+  [key: string]: unknown
 }
 
 export interface BudgetAlert {
@@ -130,6 +166,12 @@ export interface BudgetAlert {
   is_active: boolean
   last_triggered_pct: number | null
   created_at: string
+  name?: string
+  threshold?: number
+  current_spend?: number
+  status?: string
+  notification_channels?: string[]
+  [key: string]: unknown
 }
 
 export interface Deployment {

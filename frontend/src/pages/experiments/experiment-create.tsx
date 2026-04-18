@@ -36,7 +36,15 @@ export default function ExperimentCreate() {
   const totalTraffic = variants.reduce((s, v) => s + v.traffic_percentage, 0)
 
   const handleSubmit = async () => {
-    const result = await createExperiment.mutateAsync({ name, app_id: appId, variants })
+    const result = await createExperiment.mutateAsync({
+      name,
+      application_id: appId,
+      variants: variants.map((v) => ({
+        prompt_version_id: v.prompt_version_id,
+        traffic_pct: v.traffic_percentage,
+        label: v.name,
+      })),
+    })
     navigate(`/experiments/${result.id}`)
   }
 

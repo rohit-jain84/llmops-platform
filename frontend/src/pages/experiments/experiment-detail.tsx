@@ -1,7 +1,6 @@
 import { useParams } from 'react-router-dom'
 import PageHeader from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import MetricCard from '@/components/charts/metric-card'
 import { BarChart } from '@/components/charts/bar-chart'

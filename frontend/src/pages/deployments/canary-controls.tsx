@@ -2,13 +2,12 @@ import { useParams } from 'react-router-dom'
 import PageHeader from '@/components/layout/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import MetricCard from '@/components/charts/metric-card'
 import { LineChart } from '@/components/charts/line-chart'
 import LoadingSkeleton from '@/components/common/loading-skeleton'
 import { useDeployment, usePromoteDeployment, useRollbackDeployment } from '@/hooks/use-deployments'
 import { formatDate } from '@/lib/utils'
-import { Shield, ArrowUp, ArrowDown, Activity, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Shield, ArrowUp, ArrowDown, Activity, CheckCircle } from 'lucide-react'
 
 const CANARY_STAGES = [10, 25, 50, 100]
 

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/ui/data-table'
 import EmptyState from '@/components/common/empty-state'
 import LoadingSkeleton from '@/components/common/loading-skeleton'
-import { useHumanEvalCampaign } from '@/hooks/use-evaluations'
+import { useHumanEvalCampaigns } from '@/hooks/use-evaluations'
 import { formatDate } from '@/lib/utils'
 import { Plus, Users } from 'lucide-react'
 
@@ -24,7 +24,7 @@ const statusVariant: Record<string, string> = { active: 'success', draft: 'secon
 
 export default function CampaignsList() {
   const navigate = useNavigate()
-  const { data: campaigns, isLoading } = useHumanEvalCampaign()
+  const { data: campaigns, isLoading } = useHumanEvalCampaigns()
 
   if (isLoading) return <LoadingSkeleton lines={5} />
 

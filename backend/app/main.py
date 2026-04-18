@@ -16,6 +16,7 @@ async def lifespan(app: FastAPI):
     # Startup — initialize OpenTelemetry tracing and metrics
     try:
         from app.telemetry.setup import setup_telemetry
+
         setup_telemetry(app)
         logger.info("OpenTelemetry tracing initialized")
     except Exception as e:
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI):
 
     try:
         from app.telemetry.metrics import get_metrics
+
         get_metrics()  # Eagerly create metrics so exporters start immediately
         logger.info("OpenTelemetry metrics initialized")
     except Exception as e:

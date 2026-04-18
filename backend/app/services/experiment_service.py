@@ -50,17 +50,13 @@ class ExperimentService:
         await self.db.flush()
         # Reload with variants
         result = await self.db.execute(
-            select(Experiment)
-            .options(selectinload(Experiment.variants))
-            .where(Experiment.id == experiment.id)
+            select(Experiment).options(selectinload(Experiment.variants)).where(Experiment.id == experiment.id)
         )
         return result.scalar_one()
 
     async def start_experiment(self, experiment_id: uuid.UUID) -> Experiment:
         result = await self.db.execute(
-            select(Experiment)
-            .options(selectinload(Experiment.variants))
-            .where(Experiment.id == experiment_id)
+            select(Experiment).options(selectinload(Experiment.variants)).where(Experiment.id == experiment_id)
         )
         experiment = result.scalar_one_or_none()
         if not experiment:
@@ -75,9 +71,7 @@ class ExperimentService:
 
     async def stop_experiment(self, experiment_id: uuid.UUID) -> Experiment:
         result = await self.db.execute(
-            select(Experiment)
-            .options(selectinload(Experiment.variants))
-            .where(Experiment.id == experiment_id)
+            select(Experiment).options(selectinload(Experiment.variants)).where(Experiment.id == experiment_id)
         )
         experiment = result.scalar_one_or_none()
         if not experiment:
@@ -89,9 +83,7 @@ class ExperimentService:
         return experiment
 
     async def get_results(self, experiment_id: uuid.UUID) -> list[ExperimentResult]:
-        result = await self.db.execute(
-            select(ExperimentResult).where(ExperimentResult.experiment_id == experiment_id)
-        )
+        result = await self.db.execute(select(ExperimentResult).where(ExperimentResult.experiment_id == experiment_id))
         return list(result.scalars().all())
 
     async def record_eval_score(
@@ -117,12 +109,15 @@ class ExperimentService:
 
         # Force SQLAlchemy to detect JSONB mutation
         from sqlalchemy.orm.attributes import flag_modified
+
         flag_modified(exp_result, "metrics")
 
         await self.db.flush()
         return exp_result
 
-    async def compute_significance(self, experiment_id: uuid.UUID, significance_level: float = 0.05) -> list[ExperimentResult]:
+    async def compute_significance(
+        self, experiment_id: uuid.UUID, significance_level: float = 0.05
+    ) -> list[ExperimentResult]:
         """Compute statistical significance between experiment variants using Welch's t-test.
 
         Uses a one-tailed test: we only care whether the best variant is
@@ -145,10 +140,7 @@ class ExperimentService:
             variant_scores[r.variant_id] = [float(s) for s in scores] if scores else []
 
         # Rank variants by mean score (descending)
-        scored_results = [
-            (r, variant_scores.get(r.variant_id, []))
-            for r in results
-        ]
+        scored_results = [(r, variant_scores.get(r.variant_id, [])) for r in results]
         scored_results.sort(
             key=lambda pair: (sum(pair[1]) / len(pair[1])) if pair[1] else 0.0,
             reverse=True,
@@ -167,9 +159,7 @@ class ExperimentService:
             best_mean = sum(best_scores) / len(best_scores)
             runner_up_mean = sum(runner_up_scores) / len(runner_up_scores)
 
-            t_stat, two_tailed_p = stats.ttest_ind(
-                best_scores, runner_up_scores, equal_var=False
-            )
+            t_stat, two_tailed_p = stats.ttest_ind(best_scores, runner_up_scores, equal_var=False)
             two_tailed_p = float(two_tailed_p)
 
             # One-tailed: we only care if best > runner-up
@@ -195,9 +185,7 @@ class ExperimentService:
 
     async def promote_winner(self, experiment_id: uuid.UUID) -> Experiment:
         result = await self.db.execute(
-            select(Experiment)
-            .options(selectinload(Experiment.variants))
-            .where(Experiment.id == experiment_id)
+            select(Experiment).options(selectinload(Experiment.variants)).where(Experiment.id == experiment_id)
         )
         experiment = result.scalar_one_or_none()
         if not experiment:
@@ -255,6 +243,7 @@ class ExperimentService:
 
         # Simple deterministic traffic split based on user_identifier hash
         import hashlib
+
         hash_input = (user_identifier or str(uuid.uuid4())).encode()
         hash_val = int(hashlib.md5(hash_input).hexdigest(), 16) % 100
 

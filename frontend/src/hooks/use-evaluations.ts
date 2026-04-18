@@ -57,11 +57,18 @@ export function useTriggerEvalRun() {
   })
 }
 
-export function useHumanEvalCampaign(id: string) {
+export function useHumanEvalCampaign(id?: string) {
   return useQuery({
     queryKey: ['eval-campaigns', id],
-    queryFn: () => evaluationsApi.getCampaign(id),
+    queryFn: () => evaluationsApi.getCampaign(id!),
     enabled: !!id,
+  })
+}
+
+export function useHumanEvalCampaigns(applicationId?: string) {
+  return useQuery({
+    queryKey: ['eval-campaigns', 'list', { applicationId }],
+    queryFn: () => evaluationsApi.listCampaigns(applicationId),
   })
 }
 
@@ -78,8 +85,18 @@ export function useCreateCampaign() {
 export function useSubmitRating() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ assignmentId, ...data }: { assignmentId: string; ratings: Record<string, number>; notes?: string }) =>
-      evaluationsApi.submitRating(assignmentId, data),
+    mutationFn: (vars: {
+      assignmentId?: string
+      campaignId?: string
+      itemId?: string
+      ratings: Record<string, number | string>
+      notes?: string
+      comment?: string
+    }) => {
+      const { assignmentId, campaignId, itemId, ...data } = vars
+      const id = assignmentId ?? `${campaignId ?? ''}:${itemId ?? ''}`
+      return evaluationsApi.submitRating(id, data)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['eval-campaigns'] })
     },

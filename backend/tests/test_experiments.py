@@ -1,5 +1,3 @@
-import uuid
-
 import pytest
 from httpx import AsyncClient
 
@@ -19,11 +17,15 @@ async def test_create_experiment(client: AsyncClient, db_session, test_user, aut
     await db_session.flush()
 
     v1 = PromptVersion(
-        template_id=template.id, version_number=1, content="Control: {{input}}",
+        template_id=template.id,
+        version_number=1,
+        content="Control: {{input}}",
         created_by=test_user.id,
     )
     v2 = PromptVersion(
-        template_id=template.id, version_number=2, content="Variant: {{input}}",
+        template_id=template.id,
+        version_number=2,
+        content="Variant: {{input}}",
         created_by=test_user.id,
     )
     db_session.add_all([v1, v2])
@@ -68,6 +70,7 @@ async def test_create_experiment(client: AsyncClient, db_session, test_user, aut
 # Statistical significance tests
 # ---------------------------------------------------------------------------
 
+
 async def _create_running_experiment(client, db_session, test_user, auth_headers):
     """Helper: creates an app, prompt versions, and a running experiment with two variants."""
     app_obj = Application(name="Sig App", description="Test", created_by=test_user.id)
@@ -79,11 +82,15 @@ async def _create_running_experiment(client, db_session, test_user, auth_headers
     await db_session.flush()
 
     v1 = PromptVersion(
-        template_id=template.id, version_number=1, content="Control: {{input}}",
+        template_id=template.id,
+        version_number=1,
+        content="Control: {{input}}",
         created_by=test_user.id,
     )
     v2 = PromptVersion(
-        template_id=template.id, version_number=2, content="Variant: {{input}}",
+        template_id=template.id,
+        version_number=2,
+        content="Variant: {{input}}",
         created_by=test_user.id,
     )
     db_session.add_all([v1, v2])
@@ -141,14 +148,16 @@ async def test_significance_clear_winner(client: AsyncClient, db_session, test_u
     for score in [0.3, 0.35, 0.28, 0.32, 0.31, 0.29, 0.33, 0.30]:
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_control}/scores",
-            params={"score": score}, headers=auth_headers,
+            params={"score": score},
+            headers=auth_headers,
         )
 
     # Variant: clearly higher scores
     for score in [0.9, 0.88, 0.92, 0.87, 0.91, 0.89, 0.93, 0.90]:
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_variant}/scores",
-            params={"score": score}, headers=auth_headers,
+            params={"score": score},
+            headers=auth_headers,
         )
 
     # Compute significance
@@ -177,11 +186,13 @@ async def test_significance_no_winner_similar_scores(client: AsyncClient, db_ses
     for score in [0.80, 0.82, 0.79, 0.81, 0.80]:
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_control}/scores",
-            params={"score": score}, headers=auth_headers,
+            params={"score": score},
+            headers=auth_headers,
         )
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_variant}/scores",
-            params={"score": score + 0.005}, headers=auth_headers,
+            params={"score": score + 0.005},
+            headers=auth_headers,
         )
 
     response = await client.post(
@@ -202,11 +213,13 @@ async def test_significance_insufficient_data(client: AsyncClient, db_session, t
 
     await client.post(
         f"/api/v1/experiments/{exp['id']}/variants/{v_control}/scores",
-        params={"score": 0.5}, headers=auth_headers,
+        params={"score": 0.5},
+        headers=auth_headers,
     )
     await client.post(
         f"/api/v1/experiments/{exp['id']}/variants/{v_variant}/scores",
-        params={"score": 0.9}, headers=auth_headers,
+        params={"score": 0.9},
+        headers=auth_headers,
     )
 
     response = await client.post(
@@ -224,7 +237,6 @@ async def test_significance_insufficient_data(client: AsyncClient, db_session, t
 @pytest.mark.asyncio
 async def test_significance_one_tailed_directionality(client: AsyncClient, db_session, test_user, auth_headers):
     """The test must be one-tailed: higher-mean variant wins, not just 'different'."""
-    from app.services.experiment_service import ExperimentService
 
     exp = await _create_running_experiment(client, db_session, test_user, auth_headers)
     v_control = exp["variants"][0]["id"]
@@ -234,12 +246,14 @@ async def test_significance_one_tailed_directionality(client: AsyncClient, db_se
     for score in [0.9, 0.88, 0.92, 0.87, 0.91, 0.89, 0.93, 0.90]:
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_control}/scores",
-            params={"score": score}, headers=auth_headers,
+            params={"score": score},
+            headers=auth_headers,
         )
     for score in [0.3, 0.35, 0.28, 0.32, 0.31, 0.29, 0.33, 0.30]:
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_variant}/scores",
-            params={"score": score}, headers=auth_headers,
+            params={"score": score},
+            headers=auth_headers,
         )
 
     response = await client.post(
@@ -264,12 +278,14 @@ async def test_significance_custom_level(client: AsyncClient, db_session, test_u
     for score in [0.5, 0.55, 0.48, 0.52]:
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_control}/scores",
-            params={"score": score}, headers=auth_headers,
+            params={"score": score},
+            headers=auth_headers,
         )
     for score in [0.7, 0.72, 0.68, 0.71]:
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_variant}/scores",
-            params={"score": score}, headers=auth_headers,
+            params={"score": score},
+            headers=auth_headers,
         )
 
     response = await client.post(

@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.models.enums import EvalRunStatus, HumanEvalAssignmentStatus, HumanEvalCampaignStatus
 from app.models.evaluation import (
@@ -38,13 +37,12 @@ class EvaluationService:
 
         # Dispatch Celery task
         from app.workers.eval_tasks import run_eval_suite
+
         run_eval_suite.delay(str(run.id))
 
         return run
 
-    async def create_human_eval_campaign(
-        self, data: HumanEvalCampaignCreate, user_id: uuid.UUID
-    ) -> HumanEvalCampaign:
+    async def create_human_eval_campaign(self, data: HumanEvalCampaignCreate, user_id: uuid.UUID) -> HumanEvalCampaign:
         campaign = HumanEvalCampaign(
             eval_run_id=data.eval_run_id,
             name=data.name,
@@ -56,9 +54,7 @@ class EvaluationService:
         await self.db.flush()
 
         # Get eval results for this run and create assignments
-        results = await self.db.execute(
-            select(EvalResult).where(EvalResult.eval_run_id == data.eval_run_id)
-        )
+        results = await self.db.execute(select(EvalResult).where(EvalResult.eval_run_id == data.eval_run_id))
         eval_results = results.scalars().all()
 
         for eval_result in eval_results:
@@ -77,9 +73,7 @@ class EvaluationService:
     async def submit_rating(
         self, assignment_id: uuid.UUID, data: HumanEvalRatingSubmit, user_id: uuid.UUID
     ) -> HumanEvalAssignment:
-        result = await self.db.execute(
-            select(HumanEvalAssignment).where(HumanEvalAssignment.id == assignment_id)
-        )
+        result = await self.db.execute(select(HumanEvalAssignment).where(HumanEvalAssignment.id == assignment_id))
         assignment = result.scalar_one_or_none()
         if not assignment:
             raise HTTPException(status_code=404, detail="Assignment not found")

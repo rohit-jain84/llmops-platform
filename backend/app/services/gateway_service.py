@@ -1,6 +1,5 @@
 import logging
 import time
-import uuid
 from decimal import Decimal
 
 import litellm
@@ -33,17 +32,16 @@ class GatewayService:
 
     async def handle_chat(self, request) -> dict:
         # 1. Experiment resolution
-        variant = await self.experiment_svc.resolve_variant(
-            request.application_id, request.user_id
-        )
+        variant = await self.experiment_svc.resolve_variant(request.application_id, request.user_id)
 
         if variant:
             prompt_version_id = variant.prompt_version_id
         else:
             # Get production version
             result = await self.db.execute(
-                select(PromptVersion)
-                .where(PromptVersion.template_id == request.prompt_template_id, PromptVersion.tag == "production")
+                select(PromptVersion).where(
+                    PromptVersion.template_id == request.prompt_template_id, PromptVersion.tag == "production"
+                )
             )
             version = result.scalar_one_or_none()
             if not version:
@@ -60,9 +58,7 @@ class GatewayService:
             prompt_version_id = version.id
 
         # 2. Render prompt
-        render_result = await self.prompt_svc.render(
-            request.prompt_template_id, request.variables
-        )
+        render_result = await self.prompt_svc.render(request.prompt_template_id, request.variables)
         rendered_input = render_result.rendered
 
         # 3. Semantic cache check
@@ -93,9 +89,7 @@ class GatewayService:
 
         # 4. Model routing
         default_model = request.model or "gpt-4o-mini"
-        target_model = await self.routing_svc.select_model(
-            request.application_id, rendered_input, default_model
-        )
+        target_model = await self.routing_svc.select_model(request.application_id, rendered_input, default_model)
 
         # 5. Create LangFuse trace
         trace = self.langfuse_svc.create_trace(

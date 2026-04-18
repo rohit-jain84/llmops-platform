@@ -15,8 +15,8 @@ export default function BlindComparison() {
 
   if (isLoading) return <LoadingSkeleton />
 
-  const currentItem = campaign?.items?.find((i: { id: string }) => i.id === itemId)
-  const progressPct = campaign?.total_items ? ((campaign.completed_items / campaign.total_items) * 100).toFixed(0) : '0'
+  const currentItem = campaign?.items?.find((i) => i.id === itemId)
+  const progressPct = campaign?.total_items ? (((campaign.completed_items ?? 0) / campaign.total_items) * 100).toFixed(0) : '0'
 
   const handleSubmit = async () => {
     if (!selected) return

@@ -16,7 +16,7 @@ export default function CampaignDetail() {
   if (isLoading) return <LoadingSkeleton />
 
   const progressPct = campaign?.total_items
-    ? ((campaign.completed_items / campaign.total_items) * 100).toFixed(0)
+    ? (((campaign.completed_items ?? 0) / campaign.total_items) * 100).toFixed(0)
     : '0'
 
   return (

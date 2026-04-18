@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/ui/data-table'
 import EmptyState from '@/components/common/empty-state'
 import { formatDate, formatDuration } from '@/lib/utils'
-import { Search, Filter, Activity } from 'lucide-react'
+import { Search, Activity } from 'lucide-react'
 
 interface TraceRow {
   id: string
