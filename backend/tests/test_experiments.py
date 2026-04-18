@@ -274,14 +274,16 @@ async def test_significance_custom_level(client: AsyncClient, db_session, test_u
     v_control = exp["variants"][0]["id"]
     v_variant = exp["variants"][1]["id"]
 
-    # Moderately different scores — might pass 0.05 but not 0.001
+    # Moderately different scores -- pass alpha=0.05 but fail alpha=0.001.
+    # Means 0.5125 vs 0.5725, t ≈ -3.24, two-sample p ≈ 0.018
+    # (verified via scipy.stats.ttest_ind): well below 0.05, well above 0.001.
     for score in [0.5, 0.55, 0.48, 0.52]:
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_control}/scores",
             params={"score": score},
             headers=auth_headers,
         )
-    for score in [0.7, 0.72, 0.68, 0.71]:
+    for score in [0.55, 0.60, 0.56, 0.58]:
         await client.post(
             f"/api/v1/experiments/{exp['id']}/variants/{v_variant}/scores",
             params={"score": score},
